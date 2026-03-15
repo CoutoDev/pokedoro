@@ -1,13 +1,14 @@
 import { TimerContext } from "@/contexts/TimerContext"
-import { formatTime } from "@/utils/formatTime";
+import { calculateRemaining } from "@/utils/calculateRemaining"
+import { formatTime } from "@/utils/formatTime"
 import { useContext } from "react"
 
 const Timer = () => {
-  const { timer: { remaining, status, focusDuration }, timerDispatch, calculateRemaining } = useContext(TimerContext);
+  const { timer: { remaining, status, focusDuration }, timerDispatch } = useContext(TimerContext)
 
   const handleTimerInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const parsedValue = parseInt(value);
+    const value = e.target.value
+    const parsedValue = parseInt(value)
 
     if (!isNaN(parsedValue)) {
       timerDispatch({
@@ -17,7 +18,7 @@ const Timer = () => {
         }
       })
     }
-  };
+  }
 
   const handleStartClick = () => {
     timerDispatch({
@@ -25,36 +26,33 @@ const Timer = () => {
       payload: {
         focusDuration,
         remaining: calculateRemaining(new Date(), focusDuration),
-        calculateRemaining
       }
     })
-  };
+  }
 
   const handlePauseClick = () => {
     timerDispatch({
       type: "PAUSE",
       payload: {
         pausedAt: new Date(),
-        calculateRemaining
       }
     })
-  };
+  }
 
   const handleResumeClick = () => {
     timerDispatch({
       type: "RESUME",
       payload: {
         resumedAt: new Date(),
-        calculateRemaining
       }
     })
-  };
+  }
 
   const handleResetClick = () => {
     timerDispatch({
       type: "RESET"
     })
-  };
+  }
 
   return (
     <div>
@@ -63,11 +61,11 @@ const Timer = () => {
         <div className="display">
           {formatTime(remaining)}
         </div>
-        
+
         <div className="controls">
           <input
-            hidden={remaining !== focusDuration || status !== "IDLE"}
-            disabled={remaining !== focusDuration || status !== "IDLE"}
+            hidden={status !== "IDLE"}
+            disabled={status !== "IDLE"}
             name="timer"
             type="text"
             pattern="^\d{0,120}$"
@@ -76,18 +74,18 @@ const Timer = () => {
             placeholder="Minutos"
             title="Tempo em minutos, até 120 minutos"
           />
-          
+
           {status === "IDLE" && (
             <button onClick={handleStartClick}>▶️ Iniciar</button>
           )}
-          
+
           {status === "RUNNING" && (
             <>
               <button onClick={handlePauseClick}>⏸️ Pausar</button>
               <button onClick={handleResetClick}>🔄 Reset</button>
             </>
           )}
-          
+
           {status === "PAUSED" && (
             <>
               <button onClick={handleResumeClick}>▶️ Continuar</button>
@@ -97,7 +95,7 @@ const Timer = () => {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export default Timer;
+export default Timer

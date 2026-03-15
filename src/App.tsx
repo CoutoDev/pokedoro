@@ -1,15 +1,15 @@
 import Timer from "./components/Timer"
 import { TimerContextProvider } from "./contexts/TimerContext"
-import "./index.css";
+import "./index.css"
 
 export function App() {
   return (
     <div className="app">
       <TimerContextProvider>
-        <Timer/>
+        <Timer />
       </TimerContextProvider>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App

@@ -1,6 +1,6 @@
-import { createContext, useCallback, useEffect, useReducer, useRef } from "react";
+import { createContext, useEffect, useReducer } from "react"
 import { timerReducer, type TimerAction } from "@/reducers/timerReducer"
-import type { PomodoroCycle } from "@/types/pomodoro-cycle";
+import type { PomodoroCycle } from "@/types/pomodoro-cycle"
 
 export const initialTimerState: PomodoroCycle = {
   phase: 'FOCUS',
@@ -13,56 +13,42 @@ export const initialTimerState: PomodoroCycle = {
   resumedAt: null,
   resetedAt: null,
   remaining: 25 * 60,
-  intervalRef: null,
-  pausedAtRef: null,
+  interval: null,
 }
 
 export const TimerContext = createContext<{
   timer: PomodoroCycle,
   timerDispatch: React.Dispatch<TimerAction>,
-  calculateRemaining: (sessionTimeout: Date | null, focusDuration: number) => number
 }>({
   timer: initialTimerState,
-  timerDispatch: () => {},
-  calculateRemaining: () => 0
-});
+  timerDispatch: () => { },
+})
 
 
 export function TimerContextProvider({ children }: { children: React.ReactNode }) {
-  const [timer, timerDispatch] = useReducer(timerReducer, initialTimerState);
-
-  const calculateRemaining = (sessionTimeout: Date | null, focusDuration: number) => {
-    if (!sessionTimeout) return focusDuration;
-    
-    const now = new Date();
-    const diff = sessionTimeout.getTime() - now.getTime();
-    return Math.max(0, Math.ceil(diff / 1000));
-  }; 
+  const [timer, timerDispatch] = useReducer(timerReducer, initialTimerState)
 
   useEffect(() => {
-    if (timer.status !== 'RUNNING') return;
+    if (timer.status === 'RUNNING') {
+      const interval = setInterval(() => timerDispatch({
+        type: 'TICK',
+      }), 1000)
 
-    const interval = setInterval(() => timerDispatch({
-      type: 'TICK',
-      payload: {
-        intervalRef: timer.intervalRef
+      return () => {
+        clearInterval(interval)
       }
-    }), 1000);
-
-    return () => {
-      clearInterval(interval);
     }
-  }, [timer.status, timer.intervalRef]);
+  }, [timer.status])
 
   useEffect(() => {
     if (timer.status === 'IDLE' && timer.remaining === 0) {
-      timerDispatch({ type: 'RESET' });
+      timerDispatch({ type: 'RESET' })
     }
-  }, [timer.status, timer.remaining]);
+  }, [timer.status, timer.remaining])
 
   return (
-    <TimerContext value={{ timer, timerDispatch, calculateRemaining }}>
+    <TimerContext value={{ timer, timerDispatch }}>
       {children}
     </TimerContext>
-  );
+  )
 }

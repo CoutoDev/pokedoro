@@ -15,8 +15,7 @@ export type PomodoroCycle = {
   resumedAt: Date | null
   resetedAt: Date | null
   remaining: number
-  intervalRef: RefObject<NodeJS.Timeout | null> | null
-  pausedAtRef: RefObject<Date | null> | null
+  interval: Date | null
 }
 
 export type TimerAction =
