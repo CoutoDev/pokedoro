@@ -3,6 +3,7 @@ import { timerReducer, type TimerAction } from "@/reducers/timerReducer"
 import type { PomodoroCycle } from "@/types/pomodoro-cycle"
 
 export const initialTimerState: PomodoroCycle = {
+  id: crypto.randomUUID(),
   phase: 'FOCUS',
   status: 'IDLE',
   focusDuration: 25 * 60,

@@ -5,6 +5,7 @@ export type Status = 'IDLE' | 'RUNNING' | 'PAUSED';
 
 
 export type PomodoroCycle = {
+  id: string
   phase: Phase
   status: Status
   focusDuration: number

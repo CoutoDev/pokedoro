@@ -30,6 +30,7 @@ export function timerReducer(
         remaining: focusDuration,
         sessionTimeout: timeout,
         status: 'RUNNING',
+        id: state.id || crypto.randomUUID(),
       }
 
     case 'PAUSE':
@@ -75,6 +76,7 @@ export function timerReducer(
         status: 'IDLE',
         resetedAt: new Date(),
         remaining: state.focusDuration,
+        id: crypto.randomUUID(),
       }
 
     case 'SET_DURATION':

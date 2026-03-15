@@ -1,3 +1,5 @@
+import type { PomodoroCycle } from "./pomodoro-cycle"
+
 export type User = {
   id: string
   name: string
@@ -23,4 +25,5 @@ export type UserPomodoroStats = {
   totalFocusDuration: number
   totalShortBreakDuration: number
   totalLongBreakDuration: number
+  pomodoroCycles: Pick<PomodoroCycle, 'id'>[]
 }
