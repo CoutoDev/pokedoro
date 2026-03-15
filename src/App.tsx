@@ -1,10 +1,13 @@
-import Timer from "./Components/Timer"
+import Timer from "./components/Timer"
+import { TimerContextProvider } from "./contexts/TimerContext"
 import "./index.css";
 
 export function App() {
   return (
     <div className="app">
-      <Timer/>
+      <TimerContextProvider>
+        <Timer/>
+      </TimerContextProvider>
     </div>
   );
 }
