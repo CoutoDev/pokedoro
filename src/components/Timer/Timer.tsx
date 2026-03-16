@@ -30,6 +30,18 @@ const Timer = () => {
     })
   }
 
+  const handleStartBreakClick = () => {
+    timerDispatch({
+      type: "START_BREAK",
+    })
+  }
+
+  const handleStartLongBreakClick = () => {
+    timerDispatch({
+      type: "START_LONG_BREAK",
+    })
+  }
+
   const handlePauseClick = () => {
     timerDispatch({
       type: "PAUSE",
@@ -76,7 +88,11 @@ const Timer = () => {
           />
 
           {status === "IDLE" && (
-            <button onClick={handleStartClick}>▶️ Iniciar</button>
+            <>
+              <button onClick={handleStartClick}>▶️ Iniciar</button>
+              <button onClick={handleStartBreakClick}>▶️ Iniciar Pausa</button>
+              <button onClick={handleStartLongBreakClick}>▶️ Iniciar Pausa Longa</button>
+            </>
           )}
 
           {status === "RUNNING" && (

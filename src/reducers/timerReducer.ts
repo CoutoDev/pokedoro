@@ -12,6 +12,9 @@ export type TimerAction =
   | { type: 'COMPLETE_SESSION' }
   | { type: 'RESET' }
   | { type: 'SET_DURATION'; payload: Pick<PomodoroCycle, 'focusDuration'> }
+  | { type: 'START_BREAK' }
+  | { type: 'START_LONG_BREAK' }
+
 
 export function timerReducer(
   state: PomodoroCycle,
@@ -29,6 +32,32 @@ export function timerReducer(
         focusDuration: focusDuration,
         remaining: focusDuration,
         sessionTimeout: timeout,
+        status: 'RUNNING',
+        id: state.id || crypto.randomUUID(),
+      }
+
+    case 'START_BREAK':
+      const shortBreakDuration = state.shortBreakDuration
+      const shortBreakTimeout = new Date(Date.now() + shortBreakDuration * 1000)
+
+      return {
+        ...state,
+        phase: 'SHORT_BREAK',
+        remaining: shortBreakDuration,
+        sessionTimeout: shortBreakTimeout,
+        status: 'RUNNING',
+        id: state.id || crypto.randomUUID(),
+      }
+
+    case 'START_LONG_BREAK':
+      const longBreakDuration = state.longBreakDuration
+      const longBreakTimeout = new Date(Date.now() + longBreakDuration * 1000)
+
+      return {
+        ...state,
+        phase: 'LONG_BREAK',
+        remaining: longBreakDuration,
+        sessionTimeout: longBreakTimeout,
         status: 'RUNNING',
         id: state.id || crypto.randomUUID(),
       }
