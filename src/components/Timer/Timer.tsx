@@ -1,10 +1,10 @@
-import { TimerContext } from "@/contexts/TimerContext"
+import { useTimer } from "@/contexts/TimerContext"
 import { calculateRemaining } from "@/utils/calculateRemaining"
-import { formatTime } from "@/utils/formatTime"
-import { useContext } from "react"
+import TimerControls from "../TimerControls"
+import TimerDisplay from "../TimerDisplay"
 
 const Timer = () => {
-  const { timer: { remaining, status, focusDuration }, timerDispatch } = useContext(TimerContext)
+  const { timer: { remaining, status, focusDuration }, timerDispatch } = useTimer();
 
   const handleTimerInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -67,49 +67,9 @@ const Timer = () => {
   }
 
   return (
-    <div>
-      <h1>Timer</h1>
-      <div className="pomodoro-timer">
-        <div className="display">
-          {formatTime(remaining)}
-        </div>
-
-        <div className="controls">
-          <input
-            hidden={status !== "IDLE"}
-            disabled={status !== "IDLE"}
-            name="timer"
-            type="text"
-            pattern="^\d{0,120}$"
-            value={focusDuration / 60}
-            onChange={handleTimerInputChange}
-            placeholder="Minutos"
-            title="Tempo em minutos, até 120 minutos"
-          />
-
-          {status === "IDLE" && (
-            <>
-              <button onClick={handleStartClick}>▶️ Iniciar</button>
-              <button onClick={handleStartBreakClick}>▶️ Iniciar Pausa</button>
-              <button onClick={handleStartLongBreakClick}>▶️ Iniciar Pausa Longa</button>
-            </>
-          )}
-
-          {status === "RUNNING" && (
-            <>
-              <button onClick={handlePauseClick}>⏸️ Pausar</button>
-              <button onClick={handleResetClick}>🔄 Reset</button>
-            </>
-          )}
-
-          {status === "PAUSED" && (
-            <>
-              <button onClick={handleResumeClick}>▶️ Continuar</button>
-              <button onClick={handleResetClick}>🔄 Reset</button>
-            </>
-          )}
-        </div>
-      </div>
+    <div className="pomodoro-timer">
+      <TimerDisplay remaining={remaining} />
+      <TimerControls status={status} handlers={{ handleTimerInputChange, handleStartClick, handleStartBreakClick, handleStartLongBreakClick, handlePauseClick, handleResetClick, handleResumeClick }} />
     </div>
   )
 }
