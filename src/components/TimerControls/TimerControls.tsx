@@ -1,3 +1,5 @@
+import { memo } from "react"
+
 type TimerControlsProps = {
   status: string
   handlers: {
@@ -11,7 +13,7 @@ type TimerControlsProps = {
   }
 }
 
-const TimerControls = ({status, handlers}: TimerControlsProps) => {
+const TimerControls = memo(function TimerControls({status, handlers}: TimerControlsProps) {
   const { handleTimerInputChange, handleStartClick, handleStartBreakClick, handleStartLongBreakClick, handlePauseClick, handleResetClick, handleResumeClick } = handlers
   return (
     <div className="controls">
@@ -50,6 +52,6 @@ const TimerControls = ({status, handlers}: TimerControlsProps) => {
       )}
     </div>
   )
-}
+})
 
 export default TimerControls

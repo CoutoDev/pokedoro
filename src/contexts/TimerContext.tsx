@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useReducer } from "react"
+import { createContext, useContext, useEffect, useReducer, type PropsWithChildren } from "react"
+
 import { timerReducer, type TimerAction } from "@/reducers/timerReducer"
 import type { PomodoroCycle } from "@/types/pomodoro-cycle"
 
@@ -26,7 +27,7 @@ export const TimerContext = createContext<{
 })
 
 
-export function TimerContextProvider({ children }: { children: React.ReactNode }) {
+export function TimerContextProvider({ children }: PropsWithChildren) {
   const [timer, timerDispatch] = useReducer(timerReducer, initialTimerState)
 
   useEffect(() => {
@@ -54,6 +55,6 @@ export function TimerContextProvider({ children }: { children: React.ReactNode }
   )
 }
 
-export function useTimer() {
+export function useTimerContext() {
   return useContext(TimerContext)
 }
