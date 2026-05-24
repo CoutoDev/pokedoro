@@ -31,23 +31,23 @@ const TimerControls = memo(function TimerControls({status, handlers}: TimerContr
 
       {status === "IDLE" && (
         <>
-          <button onClick={handleStartClick}>▶️ Iniciar</button>
-          <button onClick={handleStartBreakClick}>▶️ Iniciar Pausa</button>
-          <button onClick={handleStartLongBreakClick}>▶️ Iniciar Pausa Longa</button>
+          <button onClick={handleStartClick}>Start</button>
+          <button onClick={handleStartBreakClick}>Break</button>
+          <button onClick={handleStartLongBreakClick}>Long Break</button>
         </>
       )}
 
       {status === "RUNNING" && (
         <>
-          <button onClick={handlePauseClick}>⏸️ Pausar</button>
-          <button onClick={handleResetClick}>🔄 Reset</button>
+          <button onClick={handlePauseClick}>Pause</button>
+          <button onClick={handleResetClick}>Reset</button>
         </>
       )}
 
       {status === "PAUSED" && (
         <>
-          <button onClick={handleResumeClick}>▶️ Continuar</button>
-          <button onClick={handleResetClick}>🔄 Reset</button>
+          <button onClick={handleResumeClick}>Resume</button>
+          <button onClick={handleResetClick}>Reset</button>
         </>
       )}
     </div>

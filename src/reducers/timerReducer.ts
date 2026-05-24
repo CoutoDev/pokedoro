@@ -12,6 +12,8 @@ export type TimerAction =
   | { type: 'COMPLETE_SESSION' }
   | { type: 'RESET' }
   | { type: 'SET_DURATION'; payload: Pick<PomodoroCycle, 'focusDuration'> }
+  | { type: 'SET_LONG_BREAK_DURATION'; payload: Pick<PomodoroCycle, 'longBreakDuration'> }
+  | { type: 'SET_SHORT_BREAK_DURATION'; payload: Pick<PomodoroCycle, 'shortBreakDuration'> }
   | { type: 'START_BREAK' }
   | { type: 'START_LONG_BREAK' }
 
@@ -115,6 +117,18 @@ export function timerReducer(
         ...state,
         focusDuration: duration,
         remaining: duration,
+      }
+
+    case 'SET_SHORT_BREAK_DURATION':
+      return {
+        ...state,
+        shortBreakDuration: action.payload.shortBreakDuration * 60,
+      }
+
+    case 'SET_LONG_BREAK_DURATION':
+      return {
+        ...state,
+        longBreakDuration: action.payload.longBreakDuration * 60,
       }
 
     case 'TICK':
