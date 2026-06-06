@@ -42,6 +42,7 @@ const TimerSettings = () => {
 
     setIsSettingsOpen(false)
   }
+  
   const handleOpenSettings = () => {
     setIsSettingsOpen(true)
   }
@@ -52,8 +53,8 @@ const TimerSettings = () => {
       <dialog open={ isSettingsOpen } id="settings-modal">
         <form onSubmit={(ev) => {ev.preventDefault()}}>
           <input name="focus" title="Focus time value" ref={focusRef} type="number" defaultValue={formatTime(focusDuration, false)} />
-          <input name="short_brake" title="Short break time value"  ref={shortBreakRef} type="number" defaultValue={formatTime(shortBreakDuration, false)} />
-          <input name="long_break" title="Long break time value"  ref={longBreakRef} type="number" defaultValue={formatTime(longBreakDuration, false)} />
+          <input name="short_brake" title="Short break time value" ref={shortBreakRef} type="number" defaultValue={formatTime(shortBreakDuration, false)} />
+          <input name="long_break" title="Long break time value" ref={longBreakRef} type="number" defaultValue={formatTime(longBreakDuration, false)} />
 
           <button onClick={handleSaveSettings}>Save and apply</button>
           <button onClick={handleCloseSettings}>Cancel</button>
