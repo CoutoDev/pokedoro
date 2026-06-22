@@ -1,5 +1,6 @@
 import { calculateRemaining } from '@/utils/calculateRemaining'
-import type { PomodoroCycle } from '../types/pomodoro-cycle'
+import type { PomodoroCycle } from '@/types/pomodoro-cycle'
+import { initialTimerState } from '@/contexts/TimerContext'
 
 export type TimerAction =
   | {
@@ -101,13 +102,7 @@ export function timerReducer(
 
     case 'RESET':
       return {
-        ...state,
-        pausedAt: null,
-        resumedAt: null,
-        status: 'IDLE',
-        resetedAt: new Date(),
-        remaining: state.focusDuration,
-        id: crypto.randomUUID(),
+        ...initialTimerState,
       }
 
     case 'SET_DURATION':
@@ -132,21 +127,16 @@ export function timerReducer(
       }
 
     case 'TICK':
-      const now = new Date()
-      const diff = state.sessionTimeout!.getTime() - now.getTime()
-      const remaining = Math.max(0, Math.ceil(diff / 1000))
-
-      if (remaining === 0) {
-        return {
-          ...state,
-          remaining: 0,
-          status: 'IDLE',
-        }
+      if (state.status !== 'RUNNING' || !state.sessionTimeout) {
+        return state
       }
-
+      
+      const remaining = calculateRemaining(state.sessionTimeout, state.focusDuration)
+      
       return {
         ...state,
-        remaining: remaining,
+        remaining,
+        status: remaining === 0 ? 'IDLE' : 'RUNNING',
       }
 
     default:

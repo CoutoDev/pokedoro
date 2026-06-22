@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { formatTime } from "@/utils/formatTime"
 import { useTimerContext } from "@/contexts/TimerContext"
@@ -10,47 +10,63 @@ const TimerSettings = () => {
   const shortBreakRef = useRef<HTMLInputElement>(null)
   const longBreakRef = useRef<HTMLInputElement>(null)
 
+  const handleCloseSettings = () => {
+    setIsSettingsOpen(false)
+  }
+
   const handleSaveSettings = () => {
+    const safeParse = (input: string | undefined | null, fallbackSeconds: number) => {
+      const fallbackMinutes = Math.floor(fallbackSeconds / 60)
+      
+      if (input == null || input.trim() === '') {
+        return fallbackMinutes
+      }
+      const num = Number(input)
+      const result = Number.isFinite(num) && num >= 0 ? num : fallbackMinutes
+      
+      return result
+    }
+
     timerDispatch({
       type: 'SET_DURATION',
       payload: {
-        focusDuration: Number(focusRef.current?.value) ?? focusDuration
+        focusDuration: safeParse(focusRef.current?.value, focusDuration),
       }
     })
 
     timerDispatch({
       type: 'SET_SHORT_BREAK_DURATION',
       payload: {
-        shortBreakDuration: Number(shortBreakRef.current?.value) ?? shortBreakDuration
+        shortBreakDuration: safeParse(shortBreakRef.current?.value, shortBreakDuration),
       }
     })
 
     timerDispatch({
       type: 'SET_LONG_BREAK_DURATION',
       payload: {
-        longBreakDuration: Number(longBreakRef.current?.value) ?? longBreakDuration
+        longBreakDuration: safeParse(longBreakRef.current?.value, longBreakDuration),
       }
     })
 
-    setIsSettingsOpen(false)
-  }
-
-  const handleCloseSettings = () => {
-    focusRef.current!.value = formatTime(focusDuration, false)
-    shortBreakRef.current!.value = formatTime(shortBreakDuration, false)
-    longBreakRef.current!.value = formatTime(longBreakDuration, false)
-
-    setIsSettingsOpen(false)
+    handleCloseSettings()
   }
   
   const handleOpenSettings = () => {
     setIsSettingsOpen(true)
   }
+
+  useEffect(() => {
+    if (!isSettingsOpen) return
+    if (focusRef.current) focusRef.current.value = formatTime(focusDuration, false)
+    if (shortBreakRef.current) shortBreakRef.current.value = formatTime(shortBreakDuration, false)
+    if (longBreakRef.current) longBreakRef.current.value = formatTime(longBreakDuration, false)
+  }, [isSettingsOpen, focusDuration, shortBreakDuration, longBreakDuration])
   
   return (
     <>
       <button onClick={handleOpenSettings}>Settings</button>
-      <dialog open={ isSettingsOpen } id="settings-modal">
+      {isSettingsOpen && (
+      <dialog open id="settings-modal">
         <form onSubmit={(ev) => {ev.preventDefault()}}>
           <input name="focus" title="Focus time value" ref={focusRef} type="number" defaultValue={formatTime(focusDuration, false)} />
           <input name="short_brake" title="Short break time value" ref={shortBreakRef} type="number" defaultValue={formatTime(shortBreakDuration, false)} />
@@ -60,6 +76,7 @@ const TimerSettings = () => {
           <button onClick={handleCloseSettings}>Cancel</button>
         </form>
       </dialog>
+      )}
     </>
   )
 }

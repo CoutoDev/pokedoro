@@ -26,7 +26,6 @@ export const TimerContext = createContext<{
   timerDispatch: () => { },
 })
 
-
 export function TimerContextProvider({ children }: PropsWithChildren) {
   const [timer, timerDispatch] = useReducer(timerReducer, initialTimerState)
 
