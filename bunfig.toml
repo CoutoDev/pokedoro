@@ -13,6 +13,7 @@ coveragePathIgnorePatterns = [
   "*.config.js",
   "webpack.config.ts",
   "vite.config.ts",
+  "happydom.ts",
 
   # Exclude specific test patterns
   "**/*.spec.ts",
