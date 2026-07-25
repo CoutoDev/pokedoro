@@ -1,1 +1,2 @@
-export { type TimerAction, timerReducer } from "./timerReducer"
+export { timerReducer } from './timerReducer'
+export type { TimerAction } from './timerReducer'

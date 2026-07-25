@@ -22,7 +22,7 @@ const TimerSettings = () => {
         return fallbackMinutes
       }
       const num = Number(input)
-      const result = Number.isFinite(num) && num >= 0 ? num : fallbackMinutes
+      const result = Number.isFinite(num) && num > 0 ? num : fallbackMinutes
       
       return result
     }
@@ -60,6 +60,7 @@ const TimerSettings = () => {
     if (focusRef.current) focusRef.current.value = formatTime(focusDuration, false)
     if (shortBreakRef.current) shortBreakRef.current.value = formatTime(shortBreakDuration, false)
     if (longBreakRef.current) longBreakRef.current.value = formatTime(longBreakDuration, false)
+    focusRef.current?.focus()
   }, [isSettingsOpen, focusDuration, shortBreakDuration, longBreakDuration])
   
   return (

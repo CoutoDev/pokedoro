@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useReducer, type PropsWithChildren } from "react"
+import { createContext, useContext, useEffect, useReducer, type Dispatch, type PropsWithChildren } from "react"
 
 import { timerReducer, type TimerAction } from "@/reducers/timerReducer"
 import type { PomodoroCycle } from "@/types/pomodoro-cycle"
@@ -18,13 +18,17 @@ export const initialTimerState: PomodoroCycle = {
   interval: null,
 }
 
-export const TimerContext = createContext<{
-  timer: PomodoroCycle,
-  timerDispatch: React.Dispatch<TimerAction>,
-}>({
+type TimerContextValue = {
+  timer: PomodoroCycle
+  timerDispatch: Dispatch<TimerAction>
+}
+
+const defaultTimerContextValue: TimerContextValue = {
   timer: initialTimerState,
-  timerDispatch: () => { },
-})
+  timerDispatch: () => {},
+}
+
+export const TimerContext = createContext<TimerContextValue>(defaultTimerContextValue)
 
 export function TimerContextProvider({ children }: PropsWithChildren) {
   const [timer, timerDispatch] = useReducer(timerReducer, initialTimerState)
@@ -48,12 +52,12 @@ export function TimerContextProvider({ children }: PropsWithChildren) {
   }, [timer.status, timer.remaining])
 
   return (
-    <TimerContext value={{ timer, timerDispatch }}>
+    <TimerContext.Provider value={{ timer, timerDispatch }}>
       {children}
-    </TimerContext>
+    </TimerContext.Provider>
   )
 }
 
 export function useTimerContext() {
-  return useContext(TimerContext)
+  return useContext(TimerContext) ?? defaultTimerContextValue
 }

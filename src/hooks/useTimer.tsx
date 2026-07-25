@@ -25,7 +25,8 @@ export const useTimer = () => {
       type: "START_FOCUS",
       payload: {
         focusDuration,
-        remaining: calculateRemaining(new Date(), focusDuration),
+        // No existing session timeout yet, so remaining is simply the full duration.
+        remaining: calculateRemaining(null, focusDuration),
       }
     })
   }, [timerDispatch, focusDuration])
