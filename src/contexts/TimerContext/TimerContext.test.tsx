@@ -95,6 +95,10 @@ function mockIntervalTimers() {
   }
 }
 
+const flush = () => act(async () => {
+  await Bun.sleep(0)
+})
+
 afterEach(() => {
   cleanup()
   mock.restore()
@@ -236,6 +240,99 @@ describe('TimerContextProvider', () => {
       method: 'PUT',
       body: expect.stringContaining('"status":"RUNNING"'),
     }))
+  })
+
+  it('restores the saved account state on login when there is no local session (IDLE)', async () => {
+    const restoredState = {
+      ...initialTimerState,
+      id: 'restored-id',
+      status: 'PAUSED',
+      phase: 'SHORT_BREAK',
+      remaining: 42,
+    };
+    (spyOn(globalThis, 'fetch') as any).mockImplementation((_url: string, init?: RequestInit) => {
+      if (init?.method === 'PUT') {
+        return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }))
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ state: restoredState }), { status: 200 }))
+    })
+    const loggedOut: AuthState = { user: null, status: 'unauthenticated', error: null }
+    const loggedIn: AuthState = {
+      user: { id: 'user-1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+      status: 'authenticated',
+      error: null,
+    }
+
+    const { rerender } = render(
+      <AuthContext.Provider value={{ auth: loggedOut, authDispatch: () => {} }}>
+        <TimerContextProvider><StateProbe /></TimerContextProvider>
+      </AuthContext.Provider>,
+    )
+
+    rerender(
+      <AuthContext.Provider value={{ auth: loggedIn, authDispatch: () => {} }}>
+        <TimerContextProvider><StateProbe /></TimerContextProvider>
+      </AuthContext.Provider>,
+    )
+    await flush()
+
+    expect(screen.getByTestId('status').textContent).toBe('PAUSED')
+    expect(screen.getByTestId('remaining').textContent).toBe('42')
+  })
+
+  it('fetches (not PUTs) /api/timer-state on login when there is no local session', () => {
+    const fetchSpy = (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
+      new Response(JSON.stringify({ state: null }), { status: 200 }),
+    ))
+    const loggedOut: AuthState = { user: null, status: 'unauthenticated', error: null }
+    const loggedIn: AuthState = {
+      user: { id: 'user-1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+      status: 'authenticated',
+      error: null,
+    }
+
+    const { rerender } = render(
+      <AuthContext.Provider value={{ auth: loggedOut, authDispatch: () => {} }}>
+        <TimerContextProvider><StateProbe /></TimerContextProvider>
+      </AuthContext.Provider>,
+    )
+
+    rerender(
+      <AuthContext.Provider value={{ auth: loggedIn, authDispatch: () => {} }}>
+        <TimerContextProvider><StateProbe /></TimerContextProvider>
+      </AuthContext.Provider>,
+    )
+
+    expect(fetchSpy).toHaveBeenCalledWith('/api/timer-state')
+    expect(fetchSpy).not.toHaveBeenCalledWith('/api/timer-state', expect.objectContaining({ method: 'PUT' }))
+  })
+
+  it('stays IDLE when logging in with no local session and the account has nothing saved', async () => {
+    (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
+      new Response(JSON.stringify({ state: null }), { status: 200 }),
+    ))
+    const loggedOut: AuthState = { user: null, status: 'unauthenticated', error: null }
+    const loggedIn: AuthState = {
+      user: { id: 'user-1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+      status: 'authenticated',
+      error: null,
+    }
+
+    const { rerender } = render(
+      <AuthContext.Provider value={{ auth: loggedOut, authDispatch: () => {} }}>
+        <TimerContextProvider><StateProbe /></TimerContextProvider>
+      </AuthContext.Provider>,
+    )
+
+    rerender(
+      <AuthContext.Provider value={{ auth: loggedIn, authDispatch: () => {} }}>
+        <TimerContextProvider><StateProbe /></TimerContextProvider>
+      </AuthContext.Provider>,
+    )
+    await flush()
+
+    expect(screen.getByTestId('status').textContent).toBe('IDLE')
   })
 
   it('PUTs to /api/timer-state on a key transition like PAUSE while authenticated', () => {

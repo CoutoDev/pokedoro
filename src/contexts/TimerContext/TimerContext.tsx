@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useReducer, useRef, type Dispatch
 import { useAuthContext } from "@/contexts/AuthContext"
 import { timerReducer, type TimerAction } from "@/reducers/timerReducer"
 import type { PomodoroCycle } from "@/types/pomodoro-cycle"
-import { loadTimerState, saveTimerState } from "@/utils/timerStorage"
+import { loadTimerState, reviveTimerState, saveTimerState } from "@/utils/timerStorage"
 
 export const initialTimerState: PomodoroCycle = {
   id: crypto.randomUUID(),
@@ -80,13 +80,52 @@ export function TimerContextProvider({ children }: PropsWithChildren) {
     auth.status,
   ])
 
-  // Claims the current in-flight (or freshly logged-in) timer snapshot to the
-  // account: fires the moment auth becomes 'authenticated' (login), and again
-  // on every subsequent key transition (start/pause/resume/reset/complete).
-  // `remaining` is deliberately excluded so a plain per-second TICK doesn't
-  // trigger a write.
+  // Links the local timer to the account on every auth transition and key
+  // state change:
+  //  - login (auth becomes 'authenticated') with an in-flight local session
+  //    (status !== 'IDLE') — that session wins, claim/overwrite it onto the
+  //    account.
+  //  - login with no local session (status === 'IDLE', e.g. a fresh browser
+  //    or right after a previous logout) — restore whatever was last saved
+  //    to the account instead.
+  //  - any subsequent key transition while already authenticated
+  //    (start/pause/resume/reset/complete) — keep the account in sync.
+  //  - logout (auth becomes 'unauthenticated') — reset the local timer, which
+  //    the save effect above then persists back to localStorage, while the
+  //    account's saved state is left untouched.
+  // `remaining` is deliberately excluded from the deps so a plain per-second
+  // TICK doesn't trigger a write.
   useEffect(() => {
+    const prevAuthStatus = prevAuthStatusRef.current
+    prevAuthStatusRef.current = auth.status
+
+    if (auth.status === 'unauthenticated' && prevAuthStatus === 'authenticated') {
+      timerDispatch({ type: 'RESET' })
+      return
+    }
+
     if (auth.status !== 'authenticated') return
+
+    const justLoggedIn = prevAuthStatus !== 'authenticated'
+
+    if (justLoggedIn && timer.status === 'IDLE') {
+      let cancelled = false
+
+      fetch('/api/timer-state')
+        .then(async (res) => {
+          if (cancelled || !res.ok) return
+
+          const { state } = await res.json()
+          if (cancelled || !state) return
+
+          timerDispatch({ type: 'HYDRATE', payload: reviveTimerState(state, initialTimerState) })
+        })
+        .catch(() => {})
+
+      return () => {
+        cancelled = true
+      }
+    }
 
     fetch('/api/timer-state', {
       method: 'PUT',
@@ -103,18 +142,6 @@ export function TimerContextProvider({ children }: PropsWithChildren) {
     timer.pausedAt,
     timer.resumedAt,
   ])
-
-  // Resets the local timer (and, via the save effect above, localStorage)
-  // when the customer logs out, so the account's saved state is untouched
-  // but this browser no longer shows their session.
-  useEffect(() => {
-    const prevAuthStatus = prevAuthStatusRef.current
-    prevAuthStatusRef.current = auth.status
-
-    if (prevAuthStatus === 'authenticated' && auth.status === 'unauthenticated') {
-      timerDispatch({ type: 'RESET' })
-    }
-  }, [auth.status])
 
   return (
     <TimerContext.Provider value={{ timer, timerDispatch }}>

@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { db } from '@/db/client'
@@ -18,6 +19,23 @@ const bodySchema = z.object({
   remaining: z.number(),
   interval: z.string().nullable(),
 })
+
+export async function getTimerState(req: Request): Promise<Response> {
+  const token = parseSessionCookie(req.headers.get('cookie'))
+  const user = await getSessionUser(token)
+
+  if (!user) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const [row] = await db
+    .select({ state: timerStates.state })
+    .from(timerStates)
+    .where(eq(timerStates.userId, user.id))
+    .limit(1)
+
+  return Response.json({ state: row ? JSON.parse(row.state) : null })
+}
 
 export async function saveTimerState(req: Request): Promise<Response> {
   const token = parseSessionCookie(req.headers.get('cookie'))

@@ -17,6 +17,7 @@ export type TimerAction =
   | { type: 'SET_SHORT_BREAK_DURATION'; payload: Pick<PomodoroCycle, 'shortBreakDuration'> }
   | { type: 'START_BREAK' }
   | { type: 'START_LONG_BREAK' }
+  | { type: 'HYDRATE'; payload: PomodoroCycle }
 
 
 export function timerReducer(
@@ -104,6 +105,9 @@ export function timerReducer(
       return {
         ...initialTimerState,
       }
+
+    case 'HYDRATE':
+      return action.payload
 
     case 'SET_DURATION':
       const duration = action.payload.focusDuration * 60

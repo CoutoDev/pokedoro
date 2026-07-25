@@ -235,6 +235,22 @@ describe('timerReducer', () => {
     })
   })
 
+  describe('HYDRATE', () => {
+    it('replaces the entire state with the payload', () => {
+      const state = createState({ status: 'IDLE' })
+      const payload = createState({
+        id: 'restored-id',
+        status: 'PAUSED',
+        phase: 'SHORT_BREAK',
+        remaining: 99,
+      })
+
+      const next = timerReducer(state, { type: 'HYDRATE', payload })
+
+      expect(next).toEqual(payload)
+    })
+  })
+
   describe('SET_DURATION', () => {
     it('converts minutes to seconds for focus duration and remaining', () => {
       const state = createState()
