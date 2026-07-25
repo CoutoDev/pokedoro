@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useReducer, type Dispatch, type PropsWithChildren } from "react"
+import { createContext, useContext, useEffect, useReducer, useRef, type Dispatch, type PropsWithChildren } from "react"
 
 import { useAuthContext } from "@/contexts/AuthContext"
 import { timerReducer, type TimerAction } from "@/reducers/timerReducer"
@@ -35,6 +35,7 @@ export const TimerContext = createContext<TimerContextValue>(defaultTimerContext
 export function TimerContextProvider({ children }: PropsWithChildren) {
   const [timer, timerDispatch] = useReducer(timerReducer, initialTimerState, loadTimerState)
   const { auth } = useAuthContext()
+  const prevAuthStatusRef = useRef(auth.status)
 
   useEffect(() => {
     saveTimerState(timer)
@@ -78,6 +79,42 @@ export function TimerContextProvider({ children }: PropsWithChildren) {
     timer.longBreakDuration,
     auth.status,
   ])
+
+  // Claims the current in-flight (or freshly logged-in) timer snapshot to the
+  // account: fires the moment auth becomes 'authenticated' (login), and again
+  // on every subsequent key transition (start/pause/resume/reset/complete).
+  // `remaining` is deliberately excluded so a plain per-second TICK doesn't
+  // trigger a write.
+  useEffect(() => {
+    if (auth.status !== 'authenticated') return
+
+    fetch('/api/timer-state', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(timer),
+    }).catch(() => {})
+  }, [
+    auth.status,
+    timer.status,
+    timer.phase,
+    timer.focusDuration,
+    timer.shortBreakDuration,
+    timer.longBreakDuration,
+    timer.pausedAt,
+    timer.resumedAt,
+  ])
+
+  // Resets the local timer (and, via the save effect above, localStorage)
+  // when the customer logs out, so the account's saved state is untouched
+  // but this browser no longer shows their session.
+  useEffect(() => {
+    const prevAuthStatus = prevAuthStatusRef.current
+    prevAuthStatusRef.current = auth.status
+
+    if (prevAuthStatus === 'authenticated' && auth.status === 'unauthenticated') {
+      timerDispatch({ type: 'RESET' })
+    }
+  }, [auth.status])
 
   return (
     <TimerContext.Provider value={{ timer, timerDispatch }}>

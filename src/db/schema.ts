@@ -35,3 +35,9 @@ export const pomodoroCycles = sqliteTable('pomodoro_cycles', {
   completedAt: integer('completed_at', { mode: 'timestamp' }).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 })
+
+export const timerStates = sqliteTable('timer_states', {
+  userId: text('user_id').primaryKey().references(() => users.id),
+  state: text('state').notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+})

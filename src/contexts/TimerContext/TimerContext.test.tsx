@@ -207,6 +207,115 @@ describe('TimerContextProvider', () => {
     calculateRemainingSpy.mockRestore()
   })
 
+  it('PUTs the current timer snapshot to /api/timer-state the moment auth becomes authenticated (login claim)', () => {
+    const fetchSpy = (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
+      new Response(JSON.stringify({ ok: true }), { status: 200 }),
+    ))
+    const loggedOut: AuthState = { user: null, status: 'unauthenticated', error: null }
+    const loggedIn: AuthState = {
+      user: { id: 'user-1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+      status: 'authenticated',
+      error: null,
+    }
+
+    const { rerender } = render(
+      <AuthContext.Provider value={{ auth: loggedOut, authDispatch: () => {} }}>
+        <TimerContextProvider><StateProbe /></TimerContextProvider>
+      </AuthContext.Provider>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    expect(fetchSpy).not.toHaveBeenCalledWith('/api/timer-state', expect.anything())
+
+    rerender(
+      <AuthContext.Provider value={{ auth: loggedIn, authDispatch: () => {} }}>
+        <TimerContextProvider><StateProbe /></TimerContextProvider>
+      </AuthContext.Provider>,
+    )
+
+    expect(fetchSpy).toHaveBeenCalledWith('/api/timer-state', expect.objectContaining({
+      method: 'PUT',
+      body: expect.stringContaining('"status":"RUNNING"'),
+    }))
+  })
+
+  it('PUTs to /api/timer-state on a key transition like PAUSE while authenticated', () => {
+    const fetchSpy = (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
+      new Response(JSON.stringify({ ok: true }), { status: 200 }),
+    ))
+
+    renderWithAuthState(<StateProbe />, {
+      user: { id: 'user-1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+      status: 'authenticated',
+      error: null,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    fetchSpy.mockClear()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pause' }))
+
+    expect(fetchSpy).toHaveBeenCalledWith('/api/timer-state', expect.objectContaining({ method: 'PUT' }))
+  })
+
+  it('does not PUT to /api/timer-state on a plain tick that only changes remaining', () => {
+    const { tick } = mockIntervalTimers()
+    const calculateRemainingSpy = spyOn(calculateRemainingModule, 'calculateRemaining')
+    calculateRemainingSpy.mockReturnValueOnce(2).mockReturnValueOnce(1)
+    const fetchSpy = (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
+      new Response(JSON.stringify({ ok: true }), { status: 200 }),
+    ))
+
+    renderWithAuthState(<StateProbe />, {
+      user: { id: 'user-1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+      status: 'authenticated',
+      error: null,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    fetchSpy.mockClear()
+
+    tick()
+
+    expect(fetchSpy).not.toHaveBeenCalledWith('/api/timer-state', expect.anything())
+
+    calculateRemainingSpy.mockRestore()
+  })
+
+  it('resets the timer and localStorage when auth transitions from authenticated to unauthenticated (logout)', () => {
+    (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
+      new Response(JSON.stringify({ ok: true }), { status: 200 }),
+    ))
+    const loggedIn: AuthState = {
+      user: { id: 'user-1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+      status: 'authenticated',
+      error: null,
+    }
+    const loggedOut: AuthState = { user: null, status: 'unauthenticated', error: null }
+
+    const { rerender } = render(
+      <AuthContext.Provider value={{ auth: loggedIn, authDispatch: () => {} }}>
+        <TimerContextProvider><StateProbe /></TimerContextProvider>
+      </AuthContext.Provider>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    expect(screen.getByTestId('status').textContent).toBe('RUNNING')
+
+    rerender(
+      <AuthContext.Provider value={{ auth: loggedOut, authDispatch: () => {} }}>
+        <TimerContextProvider><StateProbe /></TimerContextProvider>
+      </AuthContext.Provider>,
+    )
+
+    expect(screen.getByTestId('status').textContent).toBe(initialTimerState.status)
+    const raw = localStorage.getItem(STORAGE_KEY)
+    expect(JSON.parse(raw!)).toMatchObject({ status: initialTimerState.status, phase: initialTimerState.phase })
+  })
+
+  it('does not reset the timer when a guest (never authenticated) is unauthenticated from the start', () => {
+    renderWithAuthState(<StateProbe />, { user: null, status: 'unauthenticated', error: null })
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+
+    expect(screen.getByTestId('status').textContent).toBe('RUNNING')
+  })
+
   it('does not dispatch RESET while IDLE with non-zero remaining', () => {
     renderWithProvider(<StateProbe />)
 

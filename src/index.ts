@@ -5,6 +5,7 @@ import { me } from '@/api/auth/me'
 import { requestOtp } from '@/api/auth/requestOtp'
 import { verifyOtp } from '@/api/auth/verifyOtp'
 import { createCycle } from '@/api/cycles'
+import { saveTimerState } from '@/api/timerState'
 
 import index from './index.html'
 
@@ -15,6 +16,7 @@ const server = serve({
     '/api/auth/me': { GET: me },
     '/api/auth/logout': { POST: logout },
     '/api/cycles': { POST: createCycle },
+    '/api/timer-state': { PUT: saveTimerState },
 
     // Serve index.html for all unmatched routes.
     '/*': index,
