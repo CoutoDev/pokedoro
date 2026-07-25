@@ -4,6 +4,7 @@ import type { PropsWithChildren } from 'react'
 
 import { AuthContext, initialAuthState } from '@/contexts/AuthContext/AuthContext'
 import type { AuthAction, AuthState } from '@/reducers/authReducer'
+import { hasAuthFlag, setAuthFlag } from '@/utils/authFlag'
 
 import { useAuth } from './useAuth'
 
@@ -23,6 +24,7 @@ const renderUseAuth = (
 afterEach(() => {
   cleanup()
   mock.restore()
+  localStorage.clear()
 })
 
 describe('useAuth', () => {
@@ -88,6 +90,7 @@ describe('useAuth', () => {
     expect(ok).toBe(true)
     expect(authDispatch).toHaveBeenCalledWith({ type: 'AUTH_LOADING' })
     expect(authDispatch).toHaveBeenCalledWith({ type: 'AUTH_SUCCESS', payload: { user } })
+    expect(hasAuthFlag()).toBe(true)
   })
 
   it('verifyOtp dispatches AUTH_ERROR and returns false on an invalid code', async () => {
@@ -108,7 +111,8 @@ describe('useAuth', () => {
     })
   })
 
-  it('logout calls the logout endpoint and dispatches AUTH_LOGOUT', async () => {
+  it('logout calls the logout endpoint, clears the auth flag, and dispatches AUTH_LOGOUT', async () => {
+    setAuthFlag()
     const fetchSpy = (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
       new Response(JSON.stringify({ ok: true }), { status: 200 }),
     ))
@@ -120,5 +124,6 @@ describe('useAuth', () => {
 
     expect(fetchSpy).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' })
     expect(authDispatch).toHaveBeenCalledWith({ type: 'AUTH_LOGOUT' })
+    expect(hasAuthFlag()).toBe(false)
   })
 })

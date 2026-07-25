@@ -2,6 +2,7 @@ import { useCallback } from "react"
 
 import { useAuthContext } from "@/contexts/AuthContext"
 import { reviveUser } from "@/lib/reviveUser"
+import { clearAuthFlag, setAuthFlag } from "@/utils/authFlag"
 
 export const useAuth = () => {
   const { auth: { user, status, error }, authDispatch } = useAuthContext()
@@ -39,11 +40,13 @@ export const useAuth = () => {
 
     const { user } = await res.json()
     authDispatch({ type: 'AUTH_SUCCESS', payload: { user: reviveUser(user) } })
+    setAuthFlag()
     return true
   }, [authDispatch])
 
   const logout = useCallback(async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
+    clearAuthFlag()
     authDispatch({ type: 'AUTH_LOGOUT' })
   }, [authDispatch])
 

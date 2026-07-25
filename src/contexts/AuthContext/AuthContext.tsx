@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useReducer, type Dispatch, type P
 
 import { reviveUser } from "@/lib/reviveUser"
 import { authReducer, type AuthAction, type AuthState } from "@/reducers/authReducer"
+import { clearAuthFlag, hasAuthFlag } from "@/utils/authFlag"
 
 export const initialAuthState: AuthState = {
   user: null,
@@ -25,6 +26,11 @@ export function AuthContextProvider({ children }: PropsWithChildren) {
   const [auth, authDispatch] = useReducer(authReducer, initialAuthState)
 
   useEffect(() => {
+    if (!hasAuthFlag()) {
+      authDispatch({ type: 'AUTH_LOGOUT' })
+      return
+    }
+
     let cancelled = false
 
     authDispatch({ type: 'AUTH_LOADING' })
@@ -34,6 +40,7 @@ export function AuthContextProvider({ children }: PropsWithChildren) {
         if (cancelled) return
 
         if (!res.ok) {
+          clearAuthFlag()
           authDispatch({ type: 'AUTH_LOGOUT' })
           return
         }
@@ -42,7 +49,10 @@ export function AuthContextProvider({ children }: PropsWithChildren) {
         authDispatch({ type: 'AUTH_SUCCESS', payload: { user: reviveUser(user) } })
       })
       .catch(() => {
-        if (!cancelled) authDispatch({ type: 'AUTH_LOGOUT' })
+        if (!cancelled) {
+          clearAuthFlag()
+          authDispatch({ type: 'AUTH_LOGOUT' })
+        }
       })
 
     return () => {

@@ -3,6 +3,7 @@ import { useContext } from 'react'
 import { act, cleanup, render, screen } from '@testing-library/react'
 
 import type { User } from '@/types/user'
+import { setAuthFlag } from '@/utils/authFlag'
 
 import { AuthContext, AuthContextProvider, initialAuthState, useAuthContext } from './AuthContext'
 
@@ -49,10 +50,24 @@ const flush = () => act(async () => {
 afterEach(() => {
   cleanup()
   mock.restore()
+  localStorage.clear()
 })
 
 describe('AuthContextProvider', () => {
+  it('skips /api/auth/me and marks unauthenticated immediately when no auth flag is present', async () => {
+    const fetchSpy = (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
+      new Response(JSON.stringify({ user: testUser }), { status: 200 }),
+    ))
+
+    renderWithProvider(<StateProbe />)
+    await flush()
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+    expect(screen.getByTestId('status').textContent).toBe('unauthenticated')
+  })
+
   it('starts in a loading state before /api/auth/me resolves', () => {
+    setAuthFlag();
     (spyOn(globalThis, 'fetch') as any).mockImplementation(() => new Promise(() => {}))
 
     renderWithProvider(<StateProbe />)
@@ -61,6 +76,7 @@ describe('AuthContextProvider', () => {
   })
 
   it('hydrates the authenticated user when /api/auth/me returns ok', async () => {
+    setAuthFlag();
     (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
       new Response(JSON.stringify({ user: testUser }), { status: 200 }),
     ))
@@ -73,6 +89,7 @@ describe('AuthContextProvider', () => {
   })
 
   it('marks unauthenticated when /api/auth/me returns a non-ok response', async () => {
+    setAuthFlag();
     (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
       new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }),
     ))
@@ -84,6 +101,7 @@ describe('AuthContextProvider', () => {
   })
 
   it('marks unauthenticated when the /api/auth/me request rejects', async () => {
+    setAuthFlag();
     (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.reject(new Error('network down')))
 
     renderWithProvider(<StateProbe />)
