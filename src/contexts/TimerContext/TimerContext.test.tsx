@@ -211,6 +211,27 @@ describe('TimerContextProvider', () => {
     calculateRemainingSpy.mockRestore()
   })
 
+  it('swallows a network failure when posting the completed cycle to /api/cycles', async () => {
+    const { tick } = mockIntervalTimers()
+    const calculateRemainingSpy = spyOn(calculateRemainingModule, 'calculateRemaining')
+    calculateRemainingSpy.mockReturnValue(0)
+    const fetchSpy = (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.reject(new Error('network error')))
+
+    renderWithAuthState(<StateProbe />, {
+      user: { id: 'user-1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+      status: 'authenticated',
+      error: null,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    tick()
+    await flush()
+
+    expect(fetchSpy).toHaveBeenCalledWith('/api/cycles', expect.objectContaining({ method: 'POST' }))
+    expect(screen.getByTestId('status').textContent).toBe('IDLE')
+
+    calculateRemainingSpy.mockRestore()
+  })
+
   it('PUTs the current timer snapshot to /api/timer-state the moment auth becomes authenticated (login claim)', () => {
     const fetchSpy = (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
       new Response(JSON.stringify({ ok: true }), { status: 200 }),
@@ -308,6 +329,31 @@ describe('TimerContextProvider', () => {
     expect(fetchSpy).not.toHaveBeenCalledWith('/api/timer-state', expect.objectContaining({ method: 'PUT' }))
   })
 
+  it('swallows a network failure when fetching /api/timer-state on login', async () => {
+    (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.reject(new Error('network error')))
+    const loggedOut: AuthState = { user: null, status: 'unauthenticated', error: null }
+    const loggedIn: AuthState = {
+      user: { id: 'user-1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+      status: 'authenticated',
+      error: null,
+    }
+
+    const { rerender } = render(
+      <AuthContext.Provider value={{ auth: loggedOut, authDispatch: () => {} }}>
+        <TimerContextProvider><StateProbe /></TimerContextProvider>
+      </AuthContext.Provider>,
+    )
+
+    rerender(
+      <AuthContext.Provider value={{ auth: loggedIn, authDispatch: () => {} }}>
+        <TimerContextProvider><StateProbe /></TimerContextProvider>
+      </AuthContext.Provider>,
+    )
+    await flush()
+
+    expect(screen.getByTestId('status').textContent).toBe('IDLE')
+  })
+
   it('stays IDLE when logging in with no local session and the account has nothing saved', async () => {
     (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
       new Response(JSON.stringify({ state: null }), { status: 200 }),
@@ -351,6 +397,24 @@ describe('TimerContextProvider', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pause' }))
 
     expect(fetchSpy).toHaveBeenCalledWith('/api/timer-state', expect.objectContaining({ method: 'PUT' }))
+  })
+
+  it('swallows a network failure when PUTting the timer snapshot to /api/timer-state', async () => {
+    const fetchSpy = (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.reject(new Error('network error')))
+
+    renderWithAuthState(<StateProbe />, {
+      user: { id: 'user-1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+      status: 'authenticated',
+      error: null,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    fetchSpy.mockClear()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pause' }))
+    await flush()
+
+    expect(fetchSpy).toHaveBeenCalledWith('/api/timer-state', expect.objectContaining({ method: 'PUT' }))
+    expect(screen.getByTestId('status').textContent).toBe('PAUSED')
   })
 
   it('does not PUT to /api/timer-state on a plain tick that only changes remaining', () => {

@@ -9,6 +9,10 @@ coveragePathIgnorePatterns = [
   # Exclude utility files
   "src/utils/**",
 
+  # Schema definitions only (table/column declarations); the `.references()`
+  # FK callbacks are never invoked at runtime without FK pragma enforcement
+  "src/db/schema.ts",
+
   # Exclude configuration files
   "*.config.js",
   "webpack.config.ts",

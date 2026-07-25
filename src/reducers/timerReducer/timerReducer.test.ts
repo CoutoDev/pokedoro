@@ -315,6 +315,24 @@ describe('timerReducer', () => {
       expect(next.remaining).toBe(0)
       expect(next.status).toBe('IDLE')
     })
+
+    it('returns state unchanged when status is not RUNNING', () => {
+      const state = createState({
+        status: 'PAUSED',
+        sessionTimeout: new Date(fixedNow.getTime() + 90_000),
+      })
+      const next = timerReducer(state, { type: 'TICK' })
+      expect(next).toBe(state)
+    })
+
+    it('returns state unchanged when there is no sessionTimeout', () => {
+      const state = createState({
+        status: 'RUNNING',
+        sessionTimeout: null,
+      })
+      const next = timerReducer(state, { type: 'TICK' })
+      expect(next).toBe(state)
+    })
   })
 
   describe('default', () => {

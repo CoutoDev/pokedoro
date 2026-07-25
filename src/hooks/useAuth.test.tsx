@@ -93,9 +93,45 @@ describe('useAuth', () => {
     expect(hasAuthFlag()).toBe(true)
   })
 
+  it('requestOtp falls back to a generic error when the failure response body is not JSON', async () => {
+    (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
+      new Response('<html>500</html>', { status: 500 }),
+    ))
+    const { result, authDispatch } = renderUseAuth()
+
+    let ok: boolean | undefined
+    await act(async () => {
+      ok = await result.current.requestOtp('a@b.com')
+    })
+
+    expect(ok).toBe(false)
+    expect(authDispatch).toHaveBeenCalledWith({
+      type: 'AUTH_ERROR',
+      payload: { error: 'Failed to send code' },
+    })
+  })
+
   it('verifyOtp dispatches AUTH_ERROR and returns false on an invalid code', async () => {
     (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
       new Response(JSON.stringify({ error: 'Invalid code' }), { status: 400 }),
+    ))
+    const { result, authDispatch } = renderUseAuth()
+
+    let ok: boolean | undefined
+    await act(async () => {
+      ok = await result.current.verifyOtp('a@b.com', '000000')
+    })
+
+    expect(ok).toBe(false)
+    expect(authDispatch).toHaveBeenCalledWith({
+      type: 'AUTH_ERROR',
+      payload: { error: 'Invalid code' },
+    })
+  })
+
+  it('verifyOtp falls back to a generic error when the failure response body is not JSON', async () => {
+    (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
+      new Response('<html>500</html>', { status: 500 }),
     ))
     const { result, authDispatch } = renderUseAuth()
 
