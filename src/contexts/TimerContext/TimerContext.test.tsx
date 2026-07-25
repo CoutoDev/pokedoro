@@ -4,6 +4,8 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 
 import { TimerContext, TimerContextProvider, initialTimerState, useTimerContext } from './TimerContext'
 import * as calculateRemainingModule from '@/utils/calculateRemaining'
+import { AuthContext } from '@/contexts/AuthContext/AuthContext'
+import type { AuthState } from '@/reducers/authReducer'
 
 const STORAGE_KEY = 'pokedoro-timer-state'
 
@@ -50,6 +52,14 @@ const renderWithProvider = (child: React.ReactElement) => render(
   <TimerContextProvider>
     {child}
   </TimerContextProvider>,
+)
+
+const renderWithAuthState = (child: React.ReactElement, auth: AuthState) => render(
+  <AuthContext.Provider value={{ auth, authDispatch: () => {} }}>
+    <TimerContextProvider>
+      {child}
+    </TimerContextProvider>
+  </AuthContext.Provider>,
 )
 
 /**
@@ -156,6 +166,43 @@ describe('TimerContextProvider', () => {
 
     expect(screen.getByTestId('status').textContent).toBe('IDLE')
     expect(screen.getByTestId('remaining').textContent).toBe(String(initialTimerState.remaining))
+
+    calculateRemainingSpy.mockRestore()
+  })
+
+  it('posts the completed cycle to /api/cycles when the user is authenticated', () => {
+    const { tick } = mockIntervalTimers()
+    const calculateRemainingSpy = spyOn(calculateRemainingModule, 'calculateRemaining')
+    calculateRemainingSpy.mockReturnValue(0)
+    const fetchSpy = (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
+      new Response(JSON.stringify({ ok: true }), { status: 201 }),
+    ))
+
+    renderWithAuthState(<StateProbe />, {
+      user: { id: 'user-1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+      status: 'authenticated',
+      error: null,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    tick()
+
+    expect(fetchSpy).toHaveBeenCalledWith('/api/cycles', expect.objectContaining({ method: 'POST' }))
+    expect(screen.getByTestId('status').textContent).toBe('IDLE')
+
+    calculateRemainingSpy.mockRestore()
+  })
+
+  it('does not post to /api/cycles when the user is not authenticated', () => {
+    const { tick } = mockIntervalTimers()
+    const calculateRemainingSpy = spyOn(calculateRemainingModule, 'calculateRemaining')
+    calculateRemainingSpy.mockReturnValue(0)
+    const fetchSpy = (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(new Response()))
+
+    renderWithProvider(<StateProbe />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    tick()
+
+    expect(fetchSpy).not.toHaveBeenCalled()
 
     calculateRemainingSpy.mockRestore()
   })

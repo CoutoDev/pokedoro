@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useReducer, type Dispatch, type PropsWithChildren } from "react"
 
+import { useAuthContext } from "@/contexts/AuthContext"
 import { timerReducer, type TimerAction } from "@/reducers/timerReducer"
 import type { PomodoroCycle } from "@/types/pomodoro-cycle"
 import { loadTimerState, saveTimerState } from "@/utils/timerStorage"
@@ -33,6 +34,7 @@ export const TimerContext = createContext<TimerContextValue>(defaultTimerContext
 
 export function TimerContextProvider({ children }: PropsWithChildren) {
   const [timer, timerDispatch] = useReducer(timerReducer, initialTimerState, loadTimerState)
+  const { auth } = useAuthContext()
 
   useEffect(() => {
     saveTimerState(timer)
@@ -52,9 +54,30 @@ export function TimerContextProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     if (timer.status === 'IDLE' && timer.remaining === 0) {
+      if (auth.status === 'authenticated') {
+        fetch('/api/cycles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phase: timer.phase,
+            focusDuration: timer.focusDuration,
+            shortBreakDuration: timer.shortBreakDuration,
+            longBreakDuration: timer.longBreakDuration,
+          }),
+        }).catch(() => {})
+      }
+
       timerDispatch({ type: 'RESET' })
     }
-  }, [timer.status, timer.remaining])
+  }, [
+    timer.status,
+    timer.remaining,
+    timer.phase,
+    timer.focusDuration,
+    timer.shortBreakDuration,
+    timer.longBreakDuration,
+    auth.status,
+  ])
 
   return (
     <TimerContext.Provider value={{ timer, timerDispatch }}>
