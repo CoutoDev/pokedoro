@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useReducer, type Dispatch, type P
 
 import { timerReducer, type TimerAction } from "@/reducers/timerReducer"
 import type { PomodoroCycle } from "@/types/pomodoro-cycle"
+import { loadTimerState, saveTimerState } from "@/utils/timerStorage"
 
 export const initialTimerState: PomodoroCycle = {
   id: crypto.randomUUID(),
@@ -31,7 +32,11 @@ const defaultTimerContextValue: TimerContextValue = {
 export const TimerContext = createContext<TimerContextValue>(defaultTimerContextValue)
 
 export function TimerContextProvider({ children }: PropsWithChildren) {
-  const [timer, timerDispatch] = useReducer(timerReducer, initialTimerState)
+  const [timer, timerDispatch] = useReducer(timerReducer, initialTimerState, loadTimerState)
+
+  useEffect(() => {
+    saveTimerState(timer)
+  }, [timer])
 
   useEffect(() => {
     if (timer.status === 'RUNNING') {

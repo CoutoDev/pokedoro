@@ -5,6 +5,8 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { TimerContext, TimerContextProvider, initialTimerState, useTimerContext } from './TimerContext'
 import * as calculateRemainingModule from '@/utils/calculateRemaining'
 
+const STORAGE_KEY = 'pokedoro-timer-state'
+
 /**
  * Minimal consumer that surfaces the raw context value as text and exposes
  * the two dispatches needed to drive the provider's effects: START_FOCUS
@@ -86,6 +88,7 @@ function mockIntervalTimers() {
 afterEach(() => {
   cleanup()
   mock.restore()
+  localStorage.clear()
 })
 
 describe('TimerContextProvider', () => {
@@ -162,6 +165,31 @@ describe('TimerContextProvider', () => {
 
     expect(screen.getByTestId('status').textContent).toBe('IDLE')
     expect(screen.getByTestId('remaining').textContent).toBe(String(initialTimerState.remaining))
+  })
+
+  it('hydrates from a persisted PAUSED state in localStorage on mount', () => {
+    const persisted = {
+      ...initialTimerState,
+      status: 'PAUSED',
+      remaining: 42,
+      pausedAt: new Date().toISOString(),
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted))
+
+    renderWithProvider(<StateProbe />)
+
+    expect(screen.getByTestId('status').textContent).toBe('PAUSED')
+    expect(screen.getByTestId('remaining').textContent).toBe('42')
+  })
+
+  it('persists timer state to localStorage whenever it changes', () => {
+    renderWithProvider(<StateProbe />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+
+    const raw = localStorage.getItem(STORAGE_KEY)
+    expect(raw).not.toBeNull()
+    expect(JSON.parse(raw!)).toMatchObject({ status: 'RUNNING' })
   })
 })
 
