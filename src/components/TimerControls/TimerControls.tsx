@@ -1,4 +1,7 @@
 import { memo } from "react"
+import { Coffee, Moon, Pause, Play, RotateCcw } from "lucide-react"
+
+import { Button } from "@/components/ui/Button"
 
 type TimerControlsProps = {
   status: string
@@ -14,40 +17,49 @@ type TimerControlsProps = {
 }
 
 const TimerControls = memo(function TimerControls({status, handlers}: TimerControlsProps) {
-  const { handleTimerInputChange, handleStartClick, handleStartBreakClick, handleStartLongBreakClick, handlePauseClick, handleResetClick, handleResumeClick } = handlers
-  return (
-    <div className="controls">
-      {/* <input
-        hidden={status !== "IDLE"}
-        disabled={status !== "IDLE"}
-        name="timer"
-        type="text"
-        pattern="^\d{0,120}$"
-        value={focusDuration / 60}
-        onChange={handleTimerInputChange}
-        placeholder="Minutos"
-        title="Tempo em minutos, até 120 minutos"
-      /> */}
+  const { handleStartClick, handleStartBreakClick, handleStartLongBreakClick, handlePauseClick, handleResetClick, handleResumeClick } = handlers
 
+  return (
+    <div className="controls flex flex-col items-center gap-4">
       {status === "IDLE" && (
         <>
-          <button onClick={handleStartClick}>Start</button>
-          <button onClick={handleStartBreakClick}>Break</button>
-          <button onClick={handleStartLongBreakClick}>Long Break</button>
+          <Button variant="primary" size="circle" onClick={handleStartClick} aria-label="Start">
+            <Play className="h-7 w-7 fill-current" aria-hidden="true" />
+          </Button>
+          <div className="flex gap-3">
+            <Button variant="secondary" onClick={handleStartBreakClick}>
+              <Coffee className="h-4 w-4" aria-hidden="true" />
+              Break
+            </Button>
+            <Button variant="secondary" onClick={handleStartLongBreakClick}>
+              <Moon className="h-4 w-4" aria-hidden="true" />
+              Long Break
+            </Button>
+          </div>
         </>
       )}
 
       {status === "RUNNING" && (
         <>
-          <button onClick={handlePauseClick}>Pause</button>
-          <button onClick={handleResetClick}>Reset</button>
+          <Button variant="primary" size="circle" onClick={handlePauseClick} aria-label="Pause">
+            <Pause className="h-7 w-7 fill-current" aria-hidden="true" />
+          </Button>
+          <Button variant="secondary" onClick={handleResetClick}>
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />
+            Reset
+          </Button>
         </>
       )}
 
       {status === "PAUSED" && (
         <>
-          <button onClick={handleResumeClick}>Resume</button>
-          <button onClick={handleResetClick}>Reset</button>
+          <Button variant="primary" size="circle" onClick={handleResumeClick} aria-label="Resume">
+            <Play className="h-7 w-7 fill-current" aria-hidden="true" />
+          </Button>
+          <Button variant="secondary" onClick={handleResetClick}>
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />
+            Reset
+          </Button>
         </>
       )}
     </div>

@@ -1,3 +1,9 @@
+import { ArrowLeft, KeyRound, Mail } from "lucide-react"
+
+import { Button } from "@/components/ui/Button"
+import { Input } from "@/components/ui/Input"
+import { Label } from "@/components/ui/Label"
+
 type LoginFormProps = {
   step: 'email' | 'code'
   email: string
@@ -16,9 +22,9 @@ type LoginFormProps = {
 const LoginForm = ({ step, email, code, error, isSubmitting, handlers }: LoginFormProps) => {
   if (step === 'code') {
     return (
-      <form className="login-form" onSubmit={handlers.onSubmitCode}>
-        <label htmlFor="login-code">Code</label>
-        <input
+      <form className="login-form flex flex-col gap-3" onSubmit={handlers.onSubmitCode}>
+        <Label htmlFor="login-code">Code</Label>
+        <Input
           id="login-code"
           name="code"
           type="text"
@@ -28,17 +34,25 @@ const LoginForm = ({ step, email, code, error, isSubmitting, handlers }: LoginFo
           value={code}
           onChange={handlers.onCodeChange}
         />
-        <button type="submit" disabled={isSubmitting}>Verify</button>
-        <button type="button" onClick={handlers.onBack}>Back</button>
-        {error && <p role="alert">{error}</p>}
+        <div className="flex gap-3">
+          <Button type="submit" variant="primary" className="flex-1" disabled={isSubmitting}>
+            <KeyRound className="h-4 w-4" aria-hidden="true" />
+            Verify
+          </Button>
+          <Button type="button" variant="ghost" onClick={handlers.onBack}>
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            Back
+          </Button>
+        </div>
+        {error && <p role="alert" className="text-sm font-bold text-red-700">{error}</p>}
       </form>
     )
   }
 
   return (
-    <form className="login-form" onSubmit={handlers.onSubmitEmail}>
-      <label htmlFor="login-email">Email</label>
-      <input
+    <form className="login-form flex flex-col gap-3" onSubmit={handlers.onSubmitEmail}>
+      <Label htmlFor="login-email">Email</Label>
+      <Input
         id="login-email"
         name="email"
         type="email"
@@ -47,8 +61,11 @@ const LoginForm = ({ step, email, code, error, isSubmitting, handlers }: LoginFo
         value={email}
         onChange={handlers.onEmailChange}
       />
-      <button type="submit" disabled={isSubmitting}>Send code</button>
-      {error && <p role="alert">{error}</p>}
+      <Button type="submit" variant="primary" disabled={isSubmitting}>
+        <Mail className="h-4 w-4" aria-hidden="true" />
+        Send code
+      </Button>
+      {error && <p role="alert" className="text-sm font-bold text-red-700">{error}</p>}
     </form>
   )
 }

@@ -37,4 +37,18 @@ describe('TimerDisplay', () => {
 
     expect(screen.queryByText('120:00')).not.toBeNull()
   })
+
+  it('shows a phase caption matching the given phase', () => {
+    render(<TimerDisplay remaining={300} total={300} phase="SHORT_BREAK" />)
+
+    expect(screen.queryByText('Short break')).not.toBeNull()
+  })
+
+  it('renders a progress ring that reflects elapsed time', () => {
+    const { container } = render(<TimerDisplay remaining={0} total={300} phase="LONG_BREAK" />)
+
+    const circles = container.querySelectorAll('circle')
+    const progressCircle = circles[1]!
+    expect(progressCircle.getAttribute('stroke-dashoffset')).toBe('0')
+  })
 })

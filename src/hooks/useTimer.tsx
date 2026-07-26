@@ -3,8 +3,17 @@ import { useCallback } from "react"
 import { calculateRemaining } from "@/utils/calculateRemaining"
 import { useTimerContext } from "@/contexts/TimerContext"
 
+const PHASE_DURATION_KEY = {
+  FOCUS: 'focusDuration',
+  SHORT_BREAK: 'shortBreakDuration',
+  LONG_BREAK: 'longBreakDuration',
+  DONE: 'focusDuration',
+} as const
+
 export const useTimer = () => {
-  const { timer: { remaining, status, focusDuration }, timerDispatch } = useTimerContext();
+  const { timer, timerDispatch } = useTimerContext();
+  const { remaining, status, phase, focusDuration } = timer
+  const totalDuration = timer[PHASE_DURATION_KEY[phase]]
   
   const handleTimerInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -70,6 +79,8 @@ export const useTimer = () => {
   return {
     remaining,
     status,
+    phase,
+    totalDuration,
     handleTimerInputChange,
     handleStartClick,
     handleStartBreakClick,

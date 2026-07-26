@@ -1,6 +1,9 @@
 import { useCallback, useState } from "react"
+import { LogOut } from "lucide-react"
 
 import { useAuth } from "@/hooks/useAuth"
+import { Button } from "@/components/ui/Button"
+import { Card } from "@/components/ui/Card"
 
 import LoginForm from "./LoginForm"
 
@@ -46,15 +49,18 @@ const Login = () => {
 
   if (status === 'authenticated' && user) {
     return (
-      <div className="login">
-        <span>Signed in as {user.email}</span>
-        <button onClick={logout}>Sign out</button>
-      </div>
+      <Card className="login flex items-center justify-between gap-3">
+        <span className="text-sm font-bold text-ink-soft">Signed in as {user.email}</span>
+        <Button variant="ghost" size="sm" onClick={logout}>
+          <LogOut className="h-4 w-4" aria-hidden="true" />
+          Sign out
+        </Button>
+      </Card>
     )
   }
 
   return (
-    <div className="login">
+    <Card className="login">
       <LoginForm
         step={step}
         email={email}
@@ -69,7 +75,7 @@ const Login = () => {
           onBack: handleBack,
         }}
       />
-    </div>
+    </Card>
   )
 }
 

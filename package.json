@@ -5,16 +5,20 @@
   "type": "module",
   "scripts": {
     "dev": "bun --hot src/index.ts",
-    "build": "bun build ./src/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
+    "build": "bun run build.ts",
     "start": "NODE_ENV=production bun src/index.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun src/db/migrate.ts"
   },
   "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
+    "lucide-react": "^1.27.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "resend": "^6.18.0",
+    "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -24,7 +28,9 @@
     "@types/bun": "latest",
     "@types/react": "^19.2.16",
     "@types/react-dom": "^19.2.3",
+    "bun-plugin-tailwind": "^0.1.2",
     "drizzle-kit": "^0.31.10",
+    "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3"
   }
 }
