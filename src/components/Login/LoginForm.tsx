@@ -44,7 +44,7 @@ const LoginForm = ({ step, email, code, error, isSubmitting, handlers }: LoginFo
             Back
           </Button>
         </div>
-        {error && <p role="alert" className="text-sm font-bold text-red-700">{error}</p>}
+        {error && <p role="alert" className="text-base font-bold text-red-700">{error}</p>}
       </form>
     )
   }
@@ -65,7 +65,7 @@ const LoginForm = ({ step, email, code, error, isSubmitting, handlers }: LoginFo
         <Mail className="h-4 w-4" aria-hidden="true" />
         Send code
       </Button>
-      {error && <p role="alert" className="text-sm font-bold text-red-700">{error}</p>}
+      {error && <p role="alert" className="text-base font-bold text-red-700">{error}</p>}
     </form>
   )
 }

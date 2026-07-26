@@ -16,8 +16,8 @@ export const buttonVariants = cva(
           "bg-white/60 text-ink-soft hover:bg-white focus-visible:ring-ink-soft/30",
       },
       size: {
-        default: "h-11 px-5 text-sm",
-        sm: "h-9 px-4 text-xs",
+        default: "h-12 px-5 text-base",
+        sm: "h-10 px-4 text-sm",
         circle: "h-20 w-20 rounded-full text-base",
       },
     },

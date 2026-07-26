@@ -84,7 +84,7 @@ const Login = () => {
             className="login relative m-0 max-h-[86vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-none bg-white p-6 shadow-xl sm:rounded-3xl"
           >
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-heading text-lg font-extrabold text-ink-soft">
+              <h2 className="font-heading text-xl font-extrabold text-ink-soft">
                 {isAuthenticated ? 'Account' : 'Sign in'}
               </h2>
               <Button variant="ghost" size="sm" onClick={handleCloseLogin} aria-label="Close">
@@ -93,7 +93,7 @@ const Login = () => {
             </div>
             {isAuthenticated ? (
               <div className="flex flex-col gap-4">
-                <p className="text-sm font-bold text-ink-soft">Signed in as {user.email}</p>
+                <p className="text-base font-bold text-ink-soft">Signed in as {user.email}</p>
                 <Button variant="primary" onClick={handleLogout}>
                   <LogOut className="h-4 w-4" aria-hidden="true" />
                   Sign out

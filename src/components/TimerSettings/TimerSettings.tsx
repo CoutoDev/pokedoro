@@ -81,7 +81,7 @@ const TimerSettings = () => {
           className="relative m-0 max-h-[86vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-none bg-white p-6 shadow-xl sm:rounded-3xl"
         >
           <form className="flex flex-col gap-4" onSubmit={(ev) => {ev.preventDefault()}}>
-            <h2 className="font-heading text-lg font-extrabold text-ink-soft">Settings</h2>
+            <h2 className="font-heading text-xl font-extrabold text-ink-soft">Settings</h2>
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="focus-duration">Focus length (minutes)</Label>
