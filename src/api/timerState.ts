@@ -3,21 +3,28 @@ import { z } from 'zod'
 
 import { db } from '@/db/client'
 import { timerStates } from '@/db/schema'
+import { isTrustedOrigin } from '@/lib/csrf'
 import { getSessionUser, parseSessionCookie } from '@/lib/session'
 
+// 24h ceiling is far beyond any realistic focus/break length; it just keeps
+// junk numeric input (negatives, non-integers, absurdly large values) out.
+const durationSeconds = z.number().int().min(0).max(24 * 60 * 60)
+// Client-sent ISO date strings are ~24-33 chars; 100 is a generous cap.
+const isoDateString = z.string().max(100).nullable()
+
 const bodySchema = z.object({
-  id: z.string(),
+  id: z.string().min(1).max(200),
   phase: z.enum(['FOCUS', 'SHORT_BREAK', 'LONG_BREAK', 'DONE']),
   status: z.enum(['IDLE', 'RUNNING', 'PAUSED']),
-  focusDuration: z.number(),
-  shortBreakDuration: z.number(),
-  longBreakDuration: z.number(),
-  sessionTimeout: z.string().nullable(),
-  pausedAt: z.string().nullable(),
-  resumedAt: z.string().nullable(),
-  resetedAt: z.string().nullable(),
-  remaining: z.number(),
-  interval: z.string().nullable(),
+  focusDuration: durationSeconds,
+  shortBreakDuration: durationSeconds,
+  longBreakDuration: durationSeconds,
+  sessionTimeout: isoDateString,
+  pausedAt: isoDateString,
+  resumedAt: isoDateString,
+  resetedAt: isoDateString,
+  remaining: durationSeconds,
+  interval: isoDateString,
 })
 
 export async function getTimerState(req: Request): Promise<Response> {
@@ -38,6 +45,10 @@ export async function getTimerState(req: Request): Promise<Response> {
 }
 
 export async function saveTimerState(req: Request): Promise<Response> {
+  if (!isTrustedOrigin(req)) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   const token = parseSessionCookie(req.headers.get('cookie'))
   const user = await getSessionUser(token)
 

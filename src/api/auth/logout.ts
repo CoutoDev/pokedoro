@@ -1,6 +1,11 @@
+import { isTrustedOrigin } from '@/lib/csrf'
 import { buildClearedSessionCookie, destroySession, parseSessionCookie } from '@/lib/session'
 
 export async function logout(req: Request): Promise<Response> {
+  if (!isTrustedOrigin(req)) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   const token = parseSessionCookie(req.headers.get('cookie'))
   await destroySession(token)
 

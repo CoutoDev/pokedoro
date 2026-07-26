@@ -63,4 +63,14 @@ describe('logout', () => {
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ ok: true })
   })
+
+  it('returns 403 when the request comes from an untrusted origin', async () => {
+    const req = new Request('http://localhost/api/auth/logout', { method: 'POST' })
+    req.headers.append('origin', 'https://evil.example.com')
+
+    const res = await logout(req)
+
+    expect(res.status).toBe(403)
+    expect(await res.json()).toEqual({ error: 'Forbidden' })
+  })
 })

@@ -5,6 +5,7 @@ import { sendOtpEmail } from './resend'
 
 const originalApiKey = process.env.RESEND_API_KEY
 const originalFrom = process.env.OTP_FROM_EMAIL
+const originalNodeEnv = process.env.NODE_ENV
 
 /**
  * Spies on the shared `Emails.prototype.send` method (the `Emails` class
@@ -21,6 +22,7 @@ function mockEmailsSend(impl: () => Promise<{ data: unknown; error: unknown }>) 
 afterEach(() => {
   process.env.RESEND_API_KEY = originalApiKey
   process.env.OTP_FROM_EMAIL = originalFrom
+  process.env.NODE_ENV = originalNodeEnv
   mock.restore()
 })
 
@@ -33,6 +35,19 @@ describe('sendOtpEmail', () => {
     await sendOtpEmail('a@b.com', '123456')
 
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('123456'))
+    expect(sendSpy).not.toHaveBeenCalled()
+  })
+
+  it('throws instead of logging the code when RESEND_API_KEY is unset in production', async () => {
+    delete process.env.RESEND_API_KEY
+    process.env.NODE_ENV = 'production'
+    const sendSpy = mockEmailsSend(async () => ({ data: { id: 'email-1' }, error: null }))
+    const logSpy = spyOn(console, 'log').mockImplementation(() => {})
+
+    await expect(sendOtpEmail('a@b.com', '123456')).rejects.toThrow(
+      'RESEND_API_KEY must be set in production',
+    )
+    expect(logSpy).not.toHaveBeenCalled()
     expect(sendSpy).not.toHaveBeenCalled()
   })
 

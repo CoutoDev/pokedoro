@@ -41,7 +41,12 @@ export async function getSessionUser(token: string | null): Promise<User | null>
     .where(eq(sessions.tokenHash, sha256Hex(token)))
     .limit(1)
 
-  if (!row || row.expiresAt.getTime() < Date.now()) return null
+  if (!row) return null
+
+  if (row.expiresAt.getTime() < Date.now()) {
+    await destroySession(token)
+    return null
+  }
 
   return row.user
 }

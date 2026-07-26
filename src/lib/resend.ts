@@ -4,6 +4,10 @@ export async function sendOtpEmail(email: string, code: string): Promise<void> {
   const from = process.env.OTP_FROM_EMAIL ?? 'Pokedoro <onboarding@resend.dev>'
 
   if (!process.env.RESEND_API_KEY) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('RESEND_API_KEY must be set in production')
+    }
+
     console.log(`[dev] OTP for ${email}: ${code}`)
     return
   }

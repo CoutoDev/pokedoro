@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm'
 import { db } from '@/db/client'
 import { otpCodes, sessions, users } from '@/db/schema'
 import { hashOtp, OTP_MAX_ATTEMPTS } from '@/lib/otp'
+import { resetRateLimits } from '@/lib/rateLimit'
 
 import { verifyOtp } from './verifyOtp'
 
@@ -26,6 +27,7 @@ async function insertOtp(email: string, overrides: Partial<typeof otpCodes.$infe
 
 afterEach(() => {
   mock.restore()
+  resetRateLimits()
 })
 
 function postRequest(body: unknown) {
@@ -142,5 +144,17 @@ describe('verifyOtp', () => {
 
     expect(res.status).toBe(200)
     expect(body.user.id).toBe(existingId)
+  })
+
+  it('returns 429 once a client IP exceeds its verify rate limit', async () => {
+    const server = { requestIP: () => ({ address: '203.0.113.7' }) }
+
+    for (let i = 0; i < 30; i++) {
+      await verifyOtp(postRequest({ email: 'no-otp@example.com', code: CODE }), server)
+    }
+    const res = await verifyOtp(postRequest({ email: 'no-otp@example.com', code: CODE }), server)
+
+    expect(res.status).toBe(429)
+    expect(await res.json()).toEqual({ error: 'Too many requests, please try again later' })
   })
 })

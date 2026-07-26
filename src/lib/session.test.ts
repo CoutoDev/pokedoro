@@ -94,7 +94,7 @@ describe('createSession / getSessionUser / destroySession', () => {
     expect(await getSessionUser('does-not-exist')).toBeNull()
   })
 
-  it('returns null for getSessionUser when the session has expired', async () => {
+  it('returns null for getSessionUser when the session has expired, and deletes the row', async () => {
     const userId = await createUser('expired-user@example.com')
     const token = await createSession(userId)
 
@@ -104,6 +104,9 @@ describe('createSession / getSessionUser / destroySession', () => {
       .where(eq(sessions.userId, userId))
 
     expect(await getSessionUser(token)).toBeNull()
+
+    const rows = await db.select().from(sessions).where(eq(sessions.userId, userId))
+    expect(rows).toHaveLength(0)
   })
 
   it('destroySession removes the session so the token no longer resolves', async () => {

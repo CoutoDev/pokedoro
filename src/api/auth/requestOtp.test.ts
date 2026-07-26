@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm'
 
 import { db } from '@/db/client'
 import { otpCodes } from '@/db/schema'
+import { resetRateLimits } from '@/lib/rateLimit'
 
 import { requestOtp } from './requestOtp'
 
@@ -16,6 +17,7 @@ function postRequest(body: unknown) {
 
 afterEach(() => {
   mock.restore()
+  resetRateLimits()
 })
 
 describe('requestOtp', () => {
@@ -70,5 +72,31 @@ describe('requestOtp', () => {
 
     expect(stillFirst?.consumedAt).not.toBeNull()
     expect(rows.filter((r) => r.consumedAt === null)).toHaveLength(1)
+  })
+
+  it('returns 429 once an email exceeds its request rate limit', async () => {
+    spyOn(console, 'log').mockImplementation(() => {})
+    const email = 'rate-limited-email@example.com'
+
+    await requestOtp(postRequest({ email }))
+    await requestOtp(postRequest({ email }))
+    await requestOtp(postRequest({ email }))
+    const res = await requestOtp(postRequest({ email }))
+
+    expect(res.status).toBe(429)
+    expect(await res.json()).toEqual({ error: 'Too many requests, please try again later' })
+  })
+
+  it('returns 429 once a client IP exceeds its request rate limit', async () => {
+    spyOn(console, 'log').mockImplementation(() => {})
+    const server = { requestIP: () => ({ address: '203.0.113.9' }) }
+
+    for (let i = 0; i < 20; i++) {
+      await requestOtp(postRequest({ email: `ip-limit-${i}@example.com` }), server)
+    }
+    const res = await requestOtp(postRequest({ email: 'ip-limit-final@example.com' }), server)
+
+    expect(res.status).toBe(429)
+    expect(await res.json()).toEqual({ error: 'Too many requests, please try again later' })
   })
 })

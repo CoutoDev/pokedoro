@@ -1,20 +1,33 @@
-import { and, desc, eq, isNull } from 'drizzle-orm'
+import { and, desc, eq, isNull, lt, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
 import { db } from '@/db/client'
 import { otpCodes, users } from '@/db/schema'
+import { hashesEqual } from '@/lib/hash'
 import { hashOtp, OTP_LENGTH, OTP_MAX_ATTEMPTS } from '@/lib/otp'
+import { consumeRateLimit, getClientIp, type IpSource } from '@/lib/rateLimit'
 import { buildSessionCookie, createSession } from '@/lib/session'
 
 const bodySchema = z.object({
-  email: z.email(),
+  email: z.email().max(254),
   code: z.string().length(OTP_LENGTH),
 })
 
-export async function verifyOtp(req: Request): Promise<Response> {
+// Per-OTP attempts are already capped (see the atomic claim below); this
+// per-IP cap additionally stops one client from grinding through many
+// different emails/fresh codes to route around that per-row limit.
+const IP_RATE_LIMIT = { max: 30, windowMs: 10 * 60 * 1000 }
+
+export async function verifyOtp(req: Request, server?: IpSource): Promise<Response> {
   const parsed = bodySchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) {
     return Response.json({ error: 'Invalid request' }, { status: 400 })
+  }
+
+  const ip = getClientIp(req, server)
+  const ipLimit = consumeRateLimit(`otp-verify:ip:${ip}`, IP_RATE_LIMIT.max, IP_RATE_LIMIT.windowMs)
+  if (!ipLimit.allowed) {
+    return Response.json({ error: 'Too many requests, please try again later' }, { status: 429 })
   }
 
   const email = parsed.data.email.toLowerCase().trim()
@@ -31,16 +44,21 @@ export async function verifyOtp(req: Request): Promise<Response> {
     return Response.json({ error: 'Code expired or not found' }, { status: 400 })
   }
 
-  if (otp.attempts >= OTP_MAX_ATTEMPTS) {
+  // Claiming an attempt (increment + cap check) must be a single atomic
+  // statement — reading `attempts` and writing `attempts + 1` as separate
+  // steps lets concurrent requests all read the same stale count and all
+  // pass the cap check, defeating OTP_MAX_ATTEMPTS entirely.
+  const [claimed] = await db
+    .update(otpCodes)
+    .set({ attempts: sql`${otpCodes.attempts} + 1` })
+    .where(and(eq(otpCodes.id, otp.id), lt(otpCodes.attempts, OTP_MAX_ATTEMPTS)))
+    .returning()
+
+  if (!claimed) {
     return Response.json({ error: 'Too many attempts' }, { status: 429 })
   }
 
-  if (hashOtp(code) !== otp.codeHash) {
-    await db
-      .update(otpCodes)
-      .set({ attempts: otp.attempts + 1 })
-      .where(eq(otpCodes.id, otp.id))
-
+  if (!hashesEqual(hashOtp(code), claimed.codeHash)) {
     return Response.json({ error: 'Invalid code' }, { status: 400 })
   }
 

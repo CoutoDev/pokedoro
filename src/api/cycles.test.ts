@@ -36,6 +36,16 @@ function postRequest(body: unknown, token?: string) {
 }
 
 describe('createCycle', () => {
+  it('returns 403 when the request comes from an untrusted origin', async () => {
+    const req = postRequest({})
+    req.headers.append('origin', 'https://evil.example.com')
+
+    const res = await createCycle(req)
+
+    expect(res.status).toBe(403)
+    expect(await res.json()).toEqual({ error: 'Forbidden' })
+  })
+
   it('returns 401 when there is no session cookie', async () => {
     const res = await createCycle(postRequest({}))
 
