@@ -8,6 +8,8 @@ export const useAuth = () => {
   const { auth: { user, status, error }, authDispatch } = useAuthContext()
 
   const requestOtp = useCallback(async (email: string) => {
+    authDispatch({ type: 'AUTH_LOADING' })
+
     const res = await fetch('/api/auth/request-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
