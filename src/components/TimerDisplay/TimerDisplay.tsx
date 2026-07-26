@@ -29,7 +29,7 @@ const TimerDisplay = ({ remaining, total = 25 * 60, phase = "FOCUS" }: TimerDisp
   const color = PHASE_COLOR[phase]
 
   return (
-    <div className="display relative flex h-64 w-64 items-center justify-center">
+    <div className="display relative flex h-64 w-64 items-center justify-center lg:h-72 lg:w-72">
       <svg width="100%" height="100%" viewBox="0 0 240 240" className="-rotate-90">
         <circle cx="120" cy="120" r={RADIUS} fill="none" stroke="#ffffffc0" strokeWidth="16" />
         <circle
