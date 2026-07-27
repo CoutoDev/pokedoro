@@ -1,7 +1,7 @@
 import tailwindPlugin from "bun-plugin-tailwind"
 
 await Bun.build({
-  entrypoints: ["./src/index.html"],
+  entrypoints: ["./src/client/index.html"],
   outdir: "./dist",
   sourcemap: "linked",
   target: "browser",

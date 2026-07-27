@@ -7,7 +7,7 @@ import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 process.env.DATABASE_PATH = ":memory:";
 process.env.RESEND_API_KEY = "";
 
-const { db } = await import("./src/db/client");
-migrate(db, { migrationsFolder: "./src/db/migrations" });
+const { db } = await import("./src/server/db/client");
+migrate(db, { migrationsFolder: "./src/server/db/migrations" });
 
 GlobalRegistrator.register();
