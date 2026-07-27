@@ -1,4 +1,4 @@
-# bun-react-template
+# Pokédoro
 
 To install dependencies:
 

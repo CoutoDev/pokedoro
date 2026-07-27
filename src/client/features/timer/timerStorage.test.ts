@@ -125,6 +125,30 @@ describe('loadTimerState', () => {
 
     expect(result.pausedAt).toBeNull()
   })
+
+  it('falls back to the given state for a pre-rename shape (resetedAt/interval, no resetAt)', () => {
+    // The migration path R3 relies on: old localStorage from before the
+    // resetedAt -> resetAt rename doesn't match timerStateWireSchema (it's
+    // missing the now-required resetAt key), so it fails validation and
+    // resets cleanly instead of carrying the stale keys forward.
+    const preRenameShape = {
+      id: 'test-cycle-id',
+      phase: 'FOCUS',
+      status: 'PAUSED',
+      focusDuration: 1500,
+      shortBreakDuration: 300,
+      longBreakDuration: 900,
+      sessionTimeout: null,
+      pausedAt: null,
+      resumedAt: null,
+      resetedAt: null,
+      remaining: 1500,
+      interval: null,
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(preRenameShape))
+
+    expect(loadTimerState(initialTimerState)).toEqual(initialTimerState)
+  })
 })
 
 describe('saveTimerState', () => {
