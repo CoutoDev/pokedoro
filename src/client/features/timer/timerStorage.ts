@@ -3,7 +3,7 @@ import type { PomodoroCycle } from "@/shared/types/pomodoro-cycle"
 
 const STORAGE_KEY = "pokedoro-timer-state"
 
-const DATE_FIELDS = ["sessionTimeout", "pausedAt", "resumedAt", "resetedAt", "interval"] as const
+const DATE_FIELDS = ["sessionTimeout", "pausedAt", "resumedAt", "resetAt"] as const
 
 const reviveDate = (value: unknown): Date | null => {
   if (typeof value !== "string") return null
@@ -22,14 +22,21 @@ export const reviveTimerState = (parsed: unknown, fallback: PomodoroCycle): Pomo
   // `remaining` is only a snapshot for a RUNNING session — recompute it from
   // the revived deadline so the timer reflects time elapsed while the page
   // was closed, instead of showing stale time from the moment it was saved.
-  if (revived.status === "RUNNING") {
-    const remaining = calculateRemaining(revived.sessionTimeout, revived.focusDuration)
+  if (revived.status === "RUNNING" && revived.sessionTimeout) {
+    const remaining = calculateRemaining(revived.sessionTimeout)
 
     return {
       ...revived,
       remaining,
       status: remaining === 0 ? "IDLE" : "RUNNING",
     }
+  }
+
+  // A RUNNING status with no deadline is corrupt persisted state (should be
+  // unreachable in practice); fall back to IDLE rather than trusting a
+  // remaining value with nothing to recompute it from.
+  if (revived.status === "RUNNING") {
+    return { ...revived, status: "IDLE" }
   }
 
   return revived

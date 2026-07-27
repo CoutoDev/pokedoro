@@ -28,8 +28,7 @@ describe('timerReducer', () => {
     dateNowSpy.mockImplementation(() => fixedNow.getTime())
     
     calculateRemainingSpy = spyOn(calculateRemainingModule, 'calculateRemaining')
-    calculateRemainingSpy.mockImplementation((sessionTimeout: Date | null, focusDuration: number) => {
-      if (!sessionTimeout) return focusDuration
+    calculateRemainingSpy.mockImplementation((sessionTimeout: Date) => {
       const diff = sessionTimeout.getTime() - fixedNow.getTime()
       return Math.max(0, Math.ceil(diff / 1000))
     })
@@ -57,6 +56,7 @@ describe('timerReducer', () => {
       expect(next.focusDuration).toBe(focusDuration)
       expect(next.remaining).toBe(focusDuration)
       expect(next.status).toBe('RUNNING')
+      expect(next.phase).toBe('FOCUS')
       expect(next.sessionTimeout).toEqual(
         new Date(fixedNow.getTime() + focusDuration * 1000),
       )
@@ -256,7 +256,7 @@ describe('timerReducer', () => {
       const state = createState()
       const next = timerReducer(state, {
         type: 'SET_DURATION',
-        payload: { focusDuration: 30 },
+        payload: { minutes: 30 },
       })
       expect(next.focusDuration).toBe(30 * 60)
       expect(next.remaining).toBe(30 * 60)
@@ -268,7 +268,7 @@ describe('timerReducer', () => {
       const state = createState()
       const next = timerReducer(state, {
         type: 'SET_SHORT_BREAK_DURATION',
-        payload: { shortBreakDuration: 10 },
+        payload: { minutes: 10 },
       })
       expect(next.shortBreakDuration).toBe(10 * 60)
     })
@@ -279,7 +279,7 @@ describe('timerReducer', () => {
       const state = createState()
       const next = timerReducer(state, {
         type: 'SET_LONG_BREAK_DURATION',
-        payload: { longBreakDuration: 20 },
+        payload: { minutes: 20 },
       })
       expect(next.longBreakDuration).toBe(20 * 60)
     })

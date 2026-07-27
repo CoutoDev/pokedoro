@@ -34,21 +34,21 @@ const TimerSettings = () => {
     timerDispatch({
       type: 'SET_DURATION',
       payload: {
-        focusDuration: safeParse(focusRef.current?.value, focusDuration),
+        minutes: safeParse(focusRef.current?.value, focusDuration),
       }
     })
 
     timerDispatch({
       type: 'SET_SHORT_BREAK_DURATION',
       payload: {
-        shortBreakDuration: safeParse(shortBreakRef.current?.value, shortBreakDuration),
+        minutes: safeParse(shortBreakRef.current?.value, shortBreakDuration),
       }
     })
 
     timerDispatch({
       type: 'SET_LONG_BREAK_DURATION',
       payload: {
-        longBreakDuration: safeParse(longBreakRef.current?.value, longBreakDuration),
+        minutes: safeParse(longBreakRef.current?.value, longBreakDuration),
       }
     })
 

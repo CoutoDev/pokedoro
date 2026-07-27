@@ -8,14 +8,12 @@ const PHASE_COLOR: Record<Phase, string> = {
   FOCUS: "var(--color-focus)",
   SHORT_BREAK: "var(--color-short)",
   LONG_BREAK: "var(--color-long)",
-  DONE: "var(--color-focus)",
 }
 
 const PHASE_CAPTION: Record<Phase, string> = {
   FOCUS: "Focus session",
   SHORT_BREAK: "Short break",
   LONG_BREAK: "Long break",
-  DONE: "Focus session",
 }
 
 type TimerDisplayProps = {

@@ -51,7 +51,7 @@ describe('useTimer', () => {
 
       expect(timerDispatch).toHaveBeenCalledWith({
         type: 'SET_DURATION',
-        payload: { focusDuration: 40 },
+        payload: { minutes: 40 },
       })
     })
 

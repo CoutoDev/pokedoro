@@ -59,14 +59,20 @@ describe('loadTimerState', () => {
 
     const result = loadTimerState(initialTimerState)
 
-    expect(calculateRemainingSpy).toHaveBeenCalledWith(
-      expect.any(Date),
-      stored.focusDuration,
-    )
+    expect(calculateRemainingSpy).toHaveBeenCalledWith(expect.any(Date))
     expect(result.status).toBe('RUNNING')
     expect(result.remaining).toBe(120)
 
     calculateRemainingSpy.mockRestore()
+  })
+
+  it('moves a RUNNING session with no persisted sessionTimeout to IDLE', () => {
+    const stored = createState({ status: 'RUNNING', sessionTimeout: null })
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
+
+    const result = loadTimerState(initialTimerState)
+
+    expect(result.status).toBe('IDLE')
   })
 
   it('moves an expired RUNNING session to IDLE when recomputed remaining is 0', () => {

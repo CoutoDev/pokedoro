@@ -115,15 +115,15 @@ describe('TimerSettings', () => {
 
     expect(timerDispatch).toHaveBeenCalledWith({
       type: 'SET_DURATION',
-      payload: { focusDuration: 40 },
+      payload: { minutes: 40 },
     })
     expect(timerDispatch).toHaveBeenCalledWith({
       type: 'SET_SHORT_BREAK_DURATION',
-      payload: { shortBreakDuration: 8 },
+      payload: { minutes: 8 },
     })
     expect(timerDispatch).toHaveBeenCalledWith({
       type: 'SET_LONG_BREAK_DURATION',
-      payload: { longBreakDuration: 25 },
+      payload: { minutes: 25 },
     })
     expect(screen.queryByRole('dialog')).toBeNull()
   })
@@ -145,15 +145,15 @@ describe('TimerSettings', () => {
 
     expect(timerDispatch).toHaveBeenCalledWith({
       type: 'SET_DURATION',
-      payload: { focusDuration: 25 },
+      payload: { minutes: 25 },
     })
     expect(timerDispatch).toHaveBeenCalledWith({
       type: 'SET_SHORT_BREAK_DURATION',
-      payload: { shortBreakDuration: 5 },
+      payload: { minutes: 5 },
     })
     expect(timerDispatch).toHaveBeenCalledWith({
       type: 'SET_LONG_BREAK_DURATION',
-      payload: { longBreakDuration: 15 },
+      payload: { minutes: 15 },
     })
   })
 

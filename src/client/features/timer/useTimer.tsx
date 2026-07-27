@@ -1,20 +1,18 @@
 import { useCallback } from "react"
 
-import { calculateRemaining } from "@/client/features/timer/calculateRemaining"
 import { useTimerContext } from "@/client/features/timer/TimerContext"
 
 const PHASE_DURATION_KEY = {
   FOCUS: 'focusDuration',
   SHORT_BREAK: 'shortBreakDuration',
   LONG_BREAK: 'longBreakDuration',
-  DONE: 'focusDuration',
 } as const
 
 export const useTimer = () => {
   const { timer, timerDispatch } = useTimerContext();
   const { remaining, status, phase, focusDuration } = timer
   const totalDuration = timer[PHASE_DURATION_KEY[phase]]
-  
+
   const handleTimerInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     const parsedValue = parseInt(value)
@@ -23,7 +21,7 @@ export const useTimer = () => {
       timerDispatch({
         type: "SET_DURATION",
         payload: {
-          focusDuration: parsedValue
+          minutes: parsedValue
         }
       })
     }
@@ -35,7 +33,7 @@ export const useTimer = () => {
       payload: {
         focusDuration,
         // No existing session timeout yet, so remaining is simply the full duration.
-        remaining: calculateRemaining(null, focusDuration),
+        remaining: focusDuration,
       }
     })
   }, [timerDispatch, focusDuration])

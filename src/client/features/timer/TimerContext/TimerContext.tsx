@@ -15,9 +15,8 @@ export const initialTimerState: PomodoroCycle = {
   sessionTimeout: null,
   pausedAt: null,
   resumedAt: null,
-  resetedAt: null,
+  resetAt: null,
   remaining: 25 * 60,
-  interval: null,
 }
 
 type TimerContextValue = {

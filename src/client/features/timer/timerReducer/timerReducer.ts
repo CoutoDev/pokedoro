@@ -1,4 +1,5 @@
 import { calculateRemaining } from '@/client/features/timer/calculateRemaining'
+import { Duration } from '@/client/features/timer/duration'
 import type { PomodoroCycle } from '@/shared/types/pomodoro-cycle'
 import { initialTimerState } from '@/client/features/timer/TimerContext'
 
@@ -12,13 +13,21 @@ export type TimerAction =
   | { type: 'RESUME'; payload: Pick<PomodoroCycle, 'resumedAt'> }
   | { type: 'COMPLETE_SESSION' }
   | { type: 'RESET' }
-  | { type: 'SET_DURATION'; payload: Pick<PomodoroCycle, 'focusDuration'> }
-  | { type: 'SET_LONG_BREAK_DURATION'; payload: Pick<PomodoroCycle, 'longBreakDuration'> }
-  | { type: 'SET_SHORT_BREAK_DURATION'; payload: Pick<PomodoroCycle, 'shortBreakDuration'> }
+  | { type: 'SET_DURATION'; payload: { minutes: number } }
+  | { type: 'SET_LONG_BREAK_DURATION'; payload: { minutes: number } }
+  | { type: 'SET_SHORT_BREAK_DURATION'; payload: { minutes: number } }
   | { type: 'START_BREAK' }
   | { type: 'START_LONG_BREAK' }
   | { type: 'HYDRATE'; payload: PomodoroCycle }
 
+// The only two transitions whose legality depends on the current status;
+// keeping the requirement in one table (instead of an inline status check
+// per case) is the single place that documents the invariant. Every other
+// action is either legal from any status or a no-op via `default` below.
+const REQUIRES_STATUS: Record<'PAUSE' | 'RESUME', PomodoroCycle['status']> = {
+  PAUSE: 'RUNNING',
+  RESUME: 'PAUSED',
+}
 
 export function timerReducer(
   state: PomodoroCycle,
@@ -33,6 +42,7 @@ export function timerReducer(
 
       return {
         ...state,
+        phase: 'FOCUS',
         focusDuration: focusDuration,
         remaining: focusDuration,
         sessionTimeout: timeout,
@@ -67,21 +77,18 @@ export function timerReducer(
       }
 
     case 'PAUSE':
-      if (state.status !== 'RUNNING') return state
+      if (state.status !== REQUIRES_STATUS.PAUSE || !state.sessionTimeout) return state
 
       return {
         ...state,
         pausedAt: action.payload.pausedAt,
-        remaining: calculateRemaining(
-          state.sessionTimeout,
-          state.focusDuration,
-        ),
+        remaining: calculateRemaining(state.sessionTimeout),
         status: 'PAUSED',
       }
 
     case 'RESUME':
       if (
-        state.status !== 'PAUSED' ||
+        state.status !== REQUIRES_STATUS.RESUME ||
         !state.pausedAt ||
         !action.payload.resumedAt ||
         !state.sessionTimeout
@@ -96,7 +103,7 @@ export function timerReducer(
       return {
         ...state,
         resumedAt: action.payload.resumedAt,
-        remaining: calculateRemaining(adjustedTimeout, state.focusDuration),
+        remaining: calculateRemaining(adjustedTimeout),
         sessionTimeout: adjustedTimeout,
         status: 'RUNNING',
       }
@@ -110,7 +117,7 @@ export function timerReducer(
       return action.payload
 
     case 'SET_DURATION':
-      const duration = action.payload.focusDuration * 60
+      const duration = Duration.fromMinutes(action.payload.minutes).seconds
 
       return {
         ...state,
@@ -121,22 +128,22 @@ export function timerReducer(
     case 'SET_SHORT_BREAK_DURATION':
       return {
         ...state,
-        shortBreakDuration: action.payload.shortBreakDuration * 60,
+        shortBreakDuration: Duration.fromMinutes(action.payload.minutes).seconds,
       }
 
     case 'SET_LONG_BREAK_DURATION':
       return {
         ...state,
-        longBreakDuration: action.payload.longBreakDuration * 60,
+        longBreakDuration: Duration.fromMinutes(action.payload.minutes).seconds,
       }
 
     case 'TICK':
       if (state.status !== 'RUNNING' || !state.sessionTimeout) {
         return state
       }
-      
-      const remaining = calculateRemaining(state.sessionTimeout, state.focusDuration)
-      
+
+      const remaining = calculateRemaining(state.sessionTimeout)
+
       return {
         ...state,
         remaining,
