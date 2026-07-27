@@ -27,9 +27,8 @@ const validPayload = {
   sessionTimeout: null,
   pausedAt: null,
   resumedAt: null,
-  resetedAt: null,
+  resetAt: null,
   remaining: 1500,
-  interval: null,
 }
 
 /**

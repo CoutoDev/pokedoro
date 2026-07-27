@@ -1,5 +1,9 @@
-export type Phase = 'FOCUS' | 'SHORT_BREAK' | 'LONG_BREAK'
-export type Status = 'IDLE' | 'RUNNING' | 'PAUSED'
+import type { z } from 'zod'
+
+import type { phaseSchema, statusSchema } from '@/shared/schemas/pomodoroCycle'
+
+export type Phase = z.infer<typeof phaseSchema>
+export type Status = z.infer<typeof statusSchema>
 
 export type PomodoroCycle = {
   id: string

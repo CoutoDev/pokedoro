@@ -1,20 +1,8 @@
-import { z } from 'zod'
-
 import { db } from '@/server/db/client'
 import { pomodoroCycles } from '@/server/db/schema'
 import { isTrustedOrigin } from '@/server/lib/csrf'
 import { getSessionUser, parseSessionCookie } from '@/server/lib/session'
-
-// 24h ceiling is far beyond any realistic focus/break length; it just keeps
-// junk numeric input (negatives, non-integers, absurdly large values) out.
-const durationSeconds = z.number().int().min(0).max(24 * 60 * 60)
-
-const bodySchema = z.object({
-  phase: z.enum(['FOCUS', 'SHORT_BREAK', 'LONG_BREAK', 'DONE']),
-  focusDuration: durationSeconds,
-  shortBreakDuration: durationSeconds,
-  longBreakDuration: durationSeconds,
-})
+import { cyclePayloadSchema } from '@/shared/schemas/pomodoroCycle'
 
 export async function createCycle(req: Request): Promise<Response> {
   if (!isTrustedOrigin(req)) {
@@ -28,7 +16,7 @@ export async function createCycle(req: Request): Promise<Response> {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const parsed = bodySchema.safeParse(await req.json().catch(() => null))
+  const parsed = cyclePayloadSchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) {
     return Response.json({ error: 'Invalid request' }, { status: 400 })
   }

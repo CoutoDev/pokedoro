@@ -1,23 +1,35 @@
 import { calculateRemaining } from "@/client/features/timer/calculateRemaining"
+import { timerStateWireSchema, type TimerStateWire } from "@/shared/schemas/pomodoroCycle"
 import type { PomodoroCycle } from "@/shared/types/pomodoro-cycle"
 
 const STORAGE_KEY = "pokedoro-timer-state"
 
-const DATE_FIELDS = ["sessionTimeout", "pausedAt", "resumedAt", "resetAt"] as const
-
-const reviveDate = (value: unknown): Date | null => {
-  if (typeof value !== "string") return null
+const reviveDate = (value: string | null): Date | null => {
+  if (value === null) return null
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-export const reviveTimerState = (parsed: unknown, fallback: PomodoroCycle): PomodoroCycle => {
-  if (typeof parsed !== "object" || parsed === null) return fallback
+const reviveWire = (wire: TimerStateWire): PomodoroCycle => ({
+  ...wire,
+  sessionTimeout: reviveDate(wire.sessionTimeout),
+  pausedAt: reviveDate(wire.pausedAt),
+  resumedAt: reviveDate(wire.resumedAt),
+  resetAt: reviveDate(wire.resetAt),
+})
 
-  const revived: PomodoroCycle = { ...fallback, ...parsed }
-  for (const field of DATE_FIELDS) {
-    revived[field] = reviveDate((parsed as Record<string, unknown>)[field])
-  }
+/**
+ * Validates `parsed` against the same wire schema the server enforces on
+ * `/api/timer-state` (see shared/schemas/pomodoroCycle.ts), so a shape that
+ * doesn't match — e.g. localStorage still holding a pre-rename field name —
+ * falls back to `fallback` instead of silently merging in whatever keys
+ * happened to be present.
+ */
+export const reviveTimerState = (parsed: unknown, fallback: PomodoroCycle): PomodoroCycle => {
+  const result = timerStateWireSchema.safeParse(parsed)
+  if (!result.success) return fallback
+
+  const revived = reviveWire(result.data)
 
   // `remaining` is only a snapshot for a RUNNING session — recompute it from
   // the revived deadline so the timer reflects time elapsed while the page
