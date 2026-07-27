@@ -1,11 +1,7 @@
-import { and, eq, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 
-import { db } from '@/server/db/client'
-import { otpCodes } from '@/server/db/schema'
-import { generateOtp, hashOtp, OTP_EXPIRY_MS } from '@/server/lib/otp'
+import { requestOtpForEmail } from '@/server/auth/service'
 import { consumeRateLimit, getClientIp, type IpSource } from '@/server/lib/rateLimit'
-import { sendOtpEmail } from '@/server/lib/resend'
 
 const bodySchema = z.object({ email: z.email().max(254) })
 
@@ -31,25 +27,7 @@ export async function requestOtp(req: Request, server?: IpSource): Promise<Respo
     return Response.json({ error: 'Too many requests, please try again later' }, { status: 429 })
   }
 
-  const code = generateOtp()
-  const now = new Date()
-
-  await db
-    .update(otpCodes)
-    .set({ consumedAt: now })
-    .where(and(eq(otpCodes.email, email), isNull(otpCodes.consumedAt)))
-
-  await db.insert(otpCodes).values({
-    id: crypto.randomUUID(),
-    email,
-    codeHash: hashOtp(code),
-    attempts: 0,
-    consumedAt: null,
-    expiresAt: new Date(now.getTime() + OTP_EXPIRY_MS),
-    createdAt: now,
-  })
-
-  await sendOtpEmail(email, code)
+  await requestOtpForEmail(email)
 
   return Response.json({ ok: true })
 }
