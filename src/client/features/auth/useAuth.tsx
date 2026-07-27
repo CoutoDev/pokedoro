@@ -1,5 +1,6 @@
 import { useCallback } from "react"
 
+import * as api from "@/client/api"
 import { useAuthContext } from "@/client/features/auth/AuthContext"
 import { reviveUser } from "@/shared/reviveUser"
 import { clearAuthFlag, setAuthFlag } from "@/client/features/auth/authFlag"
@@ -10,15 +11,9 @@ export const useAuth = () => {
   const requestOtp = useCallback(async (email: string) => {
     authDispatch({ type: 'AUTH_LOADING' })
 
-    const res = await fetch('/api/auth/request-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    })
-
-    if (!res.ok) {
-      const { error } = await res.json().catch(() => ({ error: 'Failed to send code' }))
-      authDispatch({ type: 'AUTH_ERROR', payload: { error } })
+    const result = await api.requestOtp(email)
+    if (!result.ok) {
+      authDispatch({ type: 'AUTH_ERROR', payload: { error: result.error } })
       return false
     }
 
@@ -28,26 +23,19 @@ export const useAuth = () => {
   const verifyOtp = useCallback(async (email: string, code: string) => {
     authDispatch({ type: 'AUTH_LOADING' })
 
-    const res = await fetch('/api/auth/verify-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, code }),
-    })
-
-    if (!res.ok) {
-      const { error } = await res.json().catch(() => ({ error: 'Invalid code' }))
-      authDispatch({ type: 'AUTH_ERROR', payload: { error } })
+    const result = await api.verifyOtp(email, code)
+    if (!result.ok) {
+      authDispatch({ type: 'AUTH_ERROR', payload: { error: result.error } })
       return false
     }
 
-    const { user } = await res.json()
-    authDispatch({ type: 'AUTH_SUCCESS', payload: { user: reviveUser(user) } })
+    authDispatch({ type: 'AUTH_SUCCESS', payload: { user: reviveUser(result.data) } })
     setAuthFlag()
     return true
   }, [authDispatch])
 
   const logout = useCallback(async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
+    await api.logout()
     clearAuthFlag()
     authDispatch({ type: 'AUTH_LOGOUT' })
   }, [authDispatch])

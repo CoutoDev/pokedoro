@@ -1,7 +1,7 @@
 import { calculateRemaining } from '@/client/features/timer/calculateRemaining'
 import { Duration } from '@/client/features/timer/duration'
 import type { PomodoroCycle } from '@/shared/types/pomodoro-cycle'
-import { initialTimerState } from '@/client/features/timer/TimerContext'
+import { initialTimerState } from '@/client/features/timer/initialTimerState'
 
 export type TimerAction =
   | {

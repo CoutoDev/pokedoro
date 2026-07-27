@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useReducer, type Dispatch, type PropsWithChildren } from "react"
 
+import { getMe } from "@/client/api"
 import { reviveUser } from "@/shared/reviveUser"
 import { authReducer, type AuthAction, type AuthState } from "@/client/features/auth/authReducer"
 import { clearAuthFlag, hasAuthFlag } from "@/client/features/auth/authFlag"
@@ -35,18 +36,17 @@ export function AuthContextProvider({ children }: PropsWithChildren) {
 
     authDispatch({ type: 'AUTH_LOADING' })
 
-    fetch('/api/auth/me')
-      .then(async (res) => {
+    getMe()
+      .then((result) => {
         if (cancelled) return
 
-        if (!res.ok) {
+        if (!result.ok) {
           clearAuthFlag()
           authDispatch({ type: 'AUTH_LOGOUT' })
           return
         }
 
-        const { user } = await res.json()
-        authDispatch({ type: 'AUTH_SUCCESS', payload: { user: reviveUser(user) } })
+        authDispatch({ type: 'AUTH_SUCCESS', payload: { user: reviveUser(result.user) } })
       })
       .catch(() => {
         if (!cancelled) {

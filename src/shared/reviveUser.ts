@@ -1,6 +1,6 @@
 import type { User } from '@/shared/types/user'
 
-type SerializedUser = {
+export type SerializedUser = {
   id: string
   email: string
   createdAt: string
