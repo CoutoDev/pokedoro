@@ -36,7 +36,7 @@ export function App() {
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 lg:max-w-2xl">
         <AuthContextProvider>
           <TimerContextProvider>
-            <header className="flex items-center justify-between gap-2">
+            <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h1 className="font-heading text-base font-normal leading-relaxed text-ink-soft [text-shadow:2px_2px_0_var(--color-focus),3px_3px_0_var(--color-ink)] sm:text-lg">
                   Pokédoro
@@ -44,7 +44,7 @@ export function App() {
                 <p className="mt-1 text-sm font-bold text-muted">a pomodoro companion</p>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex justify-end gap-2">
                 <Login />
                 <TimerSettings />
               </div>
