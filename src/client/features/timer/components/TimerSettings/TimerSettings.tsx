@@ -98,8 +98,8 @@ const TimerSettings = () => {
               <Input id="long-break-duration" name="long_break" title="Long break time value" ref={longBreakRef} type="number" defaultValue={formatTime(longBreakDuration, false)} />
             </div>
 
-            <div className="mt-2 flex gap-3">
-              <Button type="submit" variant="primary" className="flex-1" onClick={handleSaveSettings}>
+            <div className="flex-col mt-2 flex gap-3 sm:flex-row">
+              <Button type="submit" variant="primary" onClick={handleSaveSettings}>
                 <Check className="h-4 w-4" aria-hidden="true" />
                 Save and apply
               </Button>

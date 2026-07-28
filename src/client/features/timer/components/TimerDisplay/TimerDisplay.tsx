@@ -45,7 +45,7 @@ const TimerDisplay = ({ remaining, total = 25 * 60, phase = "FOCUS" }: TimerDisp
           />
         </svg>
         <div className="absolute flex flex-col items-center">
-          <span className="font-heading text-4xl font-normal tabular-nums text-ink-soft lg:text-5xl">
+          <span className="font-heading text-3xl font-normal tabular-nums text-ink-soft lg:text-4xl">
             {formatTime(remaining)}
           </span>
           <span className="mt-2.5 text-sm font-bold text-muted">{PHASE_CAPTION[phase]}</span>
