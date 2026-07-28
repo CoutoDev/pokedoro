@@ -40,8 +40,8 @@ const Collection = () => {
 
   if (auth.status !== 'authenticated') {
     return (
-      <div className="flex flex-col items-center gap-2 p-6 text-center">
-        <p className="font-heading text-lg font-bold text-ink-soft">Sign in to see your collection</p>
+      <div className="flex flex-col items-center gap-2 rounded-2xl border-[3px] border-dashed border-muted bg-card p-8 text-center">
+        <p className="font-body text-lg font-extrabold text-ink-soft">Sign in to see your collection</p>
         <p className="text-sm font-semibold text-muted">
           Catch Pokémon by completing focus sessions and breaks — sign in above to start saving them.
         </p>
@@ -54,7 +54,7 @@ const Collection = () => {
   }
 
   if (error) {
-    return <p className="p-6 text-center text-sm font-semibold text-red-500">{error}</p>
+    return <p className="p-6 text-center text-sm font-semibold text-focus">{error}</p>
   }
 
   return <CollectionGrid catches={catches} />

@@ -6,7 +6,7 @@ export interface LabelProps extends LabelHTMLAttributes<HTMLLabelElement> {}
 
 export const Label = ({ className, ...props }: LabelProps) => (
   <label
-    className={cn("font-heading text-sm font-bold text-ink-soft", className)}
+    className={cn("font-body text-sm font-extrabold text-ink-soft", className)}
     {...props}
   />
 )

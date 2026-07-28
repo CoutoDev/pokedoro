@@ -74,14 +74,14 @@ const TimerSettings = () => {
         Settings
       </Button>
       {isSettingsOpen && (
-      <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 sm:items-center">
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/60 sm:items-center">
         <dialog
           open
           id="settings-modal"
-          className="relative m-0 max-h-[86vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-none bg-white p-6 shadow-xl sm:rounded-3xl"
+          className="relative m-0 max-h-[86vh] w-full max-w-md overflow-y-auto rounded-t-2xl border-4 border-b-0 border-ink bg-card p-6 shadow-none sm:rounded-2xl sm:border-b-4"
         >
           <form className="flex flex-col gap-4" onSubmit={(ev) => {ev.preventDefault()}}>
-            <h2 className="font-heading text-xl font-extrabold text-ink-soft">Settings</h2>
+            <h2 className="font-heading text-base font-normal text-ink-soft">Settings</h2>
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="focus-duration">Focus length (minutes)</Label>

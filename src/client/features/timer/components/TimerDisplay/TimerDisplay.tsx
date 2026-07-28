@@ -27,27 +27,29 @@ const TimerDisplay = ({ remaining, total = 25 * 60, phase = "FOCUS" }: TimerDisp
   const color = PHASE_COLOR[phase]
 
   return (
-    <div className="display relative flex h-64 w-64 items-center justify-center lg:h-72 lg:w-72">
-      <svg width="100%" height="100%" viewBox="0 0 240 240" className="-rotate-90">
-        <circle cx="120" cy="120" r={RADIUS} fill="none" stroke="#ffffffc0" strokeWidth="16" />
-        <circle
-          cx="120"
-          cy="120"
-          r={RADIUS}
-          fill="none"
-          stroke={color}
-          strokeWidth="16"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className="transition-[stroke-dashoffset] duration-900 ease-linear"
-        />
-      </svg>
-      <div className="absolute flex flex-col items-center">
-        <span className="font-heading text-6xl font-extrabold tabular-nums text-ink-soft lg:text-7xl">
-          {formatTime(remaining)}
-        </span>
-        <span className="mt-1.5 text-base font-bold text-muted">{PHASE_CAPTION[phase]}</span>
+    <div className="rounded-2xl border-4 border-ink-soft bg-card p-5 shadow-[5px_5px_0_0_var(--color-ink-soft)]">
+      <div className="display relative flex h-56 w-56 items-center justify-center lg:h-64 lg:w-64">
+        <svg width="100%" height="100%" viewBox="0 0 240 240" className="-rotate-90">
+          <circle cx="120" cy="120" r={RADIUS} fill="none" stroke="var(--color-ring-track)" strokeWidth="16" />
+          <circle
+            cx="120"
+            cy="120"
+            r={RADIUS}
+            fill="none"
+            stroke={color}
+            strokeWidth="16"
+            strokeLinecap="butt"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            className="transition-[stroke-dashoffset] duration-900 ease-linear"
+          />
+        </svg>
+        <div className="absolute flex flex-col items-center">
+          <span className="font-heading text-4xl font-normal tabular-nums text-ink-soft lg:text-5xl">
+            {formatTime(remaining)}
+          </span>
+          <span className="mt-2.5 text-sm font-bold text-muted">{PHASE_CAPTION[phase]}</span>
+        </div>
       </div>
     </div>
   )

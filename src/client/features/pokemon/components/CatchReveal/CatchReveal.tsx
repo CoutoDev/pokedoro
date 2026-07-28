@@ -3,8 +3,15 @@ import { LogIn, PartyPopper, RotateCcw } from "lucide-react"
 
 import { capitalizeName } from "@/client/features/pokemon/capitalizeName"
 import { pokemonSpecies } from "@/shared/data/pokemonSpecies"
-import type { CaughtPokemon } from "@/shared/types/pokemon"
+import type { CaughtPokemon, PokemonRarity } from "@/shared/types/pokemon"
 import { Button } from "@/client/ui/Button"
+import { cn } from "@/client/lib/cn"
+
+const RARITY_BADGE: Record<PokemonRarity, string> = {
+  rare: "bg-focus text-card",
+  uncommon: "bg-short text-card",
+  common: "bg-ink-soft text-card",
+}
 
 export interface CatchRevealProps {
   caughtPokemon: CaughtPokemon | null
@@ -36,7 +43,7 @@ const CatchReveal = ({ caughtPokemon, showLoginNudge, error, onDismiss }: CatchR
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/60 sm:items-center">
       <dialog
         ref={dialogRef}
         onKeyDown={handleKeyDown}
@@ -44,7 +51,7 @@ const CatchReveal = ({ caughtPokemon, showLoginNudge, error, onDismiss }: CatchR
           e.preventDefault()
           onDismiss()
         }}
-        className="catch-reveal relative m-0 max-h-[86vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-none bg-white p-6 text-center shadow-xl sm:rounded-3xl"
+        className="catch-reveal relative m-0 max-h-[86vh] w-full max-w-md overflow-y-auto rounded-t-2xl border-4 border-b-0 border-ink bg-card p-6 text-center shadow-none sm:rounded-2xl sm:border-b-4"
       >
         {caughtPokemon && species ? (
           <CaughtContent species={species} onDismiss={onDismiss} />
@@ -62,16 +69,26 @@ function CaughtContent({
   species,
   onDismiss,
 }: {
-  species: { name: string; spriteUrl: string; rarity: string }
+  species: { name: string; spriteUrl: string; rarity: PokemonRarity }
   onDismiss: () => void
 }) {
   return (
     <>
-      <PartyPopper className="mx-auto h-10 w-10 text-focus" aria-hidden="true" />
-      <h2 className="mt-2 font-heading text-xl font-extrabold text-ink-soft">Caught!</h2>
-      <img src={species.spriteUrl} alt={capitalizeName(species.name)} className="mx-auto my-4 h-32 w-32" />
-      <p className="text-lg font-bold text-ink-soft">{capitalizeName(species.name)}</p>
-      <p className="mb-6 text-sm font-semibold capitalize text-muted">{species.rarity}</p>
+      <div aria-hidden="true" className="animate-[sparkle_1.4s_ease-in-out_infinite] text-lg text-[#ffb703]">
+        <PartyPopper className="mx-auto h-6 w-6" />
+      </div>
+      <h2 className="mt-2 font-heading text-base font-normal text-ink-soft">Caught!</h2>
+      <div className="mx-auto my-4 flex h-32 w-32 items-center justify-center rounded-xl border-2 border-ink-soft bg-paper">
+        <img
+          src={species.spriteUrl}
+          alt={capitalizeName(species.name)}
+          className="h-24 w-24 animate-[pop-in_0.5s_cubic-bezier(.34,1.56,.64,1)] object-contain"
+        />
+      </div>
+      <p className="font-heading text-base font-normal text-ink-soft">{capitalizeName(species.name)}</p>
+      <span className={cn("mb-6 mt-2 inline-block rounded px-3 py-1 text-xs font-extrabold uppercase", RARITY_BADGE[species.rarity])}>
+        {species.rarity}
+      </span>
       <Button variant="primary" className="w-full" onClick={onDismiss}>
         Got it!
       </Button>
@@ -82,7 +99,7 @@ function CaughtContent({
 function LoginNudgeContent({ onDismiss }: { onDismiss: () => void }) {
   return (
     <>
-      <h2 className="font-heading text-xl font-extrabold text-ink-soft">Sign in to catch Pokémon</h2>
+      <h2 className="font-body text-lg font-extrabold text-ink-soft">Sign in to catch Pokémon</h2>
       <p className="mb-6 mt-2 text-sm font-semibold text-muted">
         Build your collection by creating an account — this catch didn't count.
       </p>
@@ -103,7 +120,7 @@ function LoginNudgeContent({ onDismiss }: { onDismiss: () => void }) {
 function ErrorContent({ error, onDismiss }: { error: string; onDismiss: () => void }) {
   return (
     <>
-      <h2 className="font-heading text-xl font-extrabold text-ink-soft">Couldn't catch it</h2>
+      <h2 className="font-body text-lg font-extrabold text-ink-soft">Couldn't catch it</h2>
       <p className="mb-6 mt-2 text-sm font-semibold text-muted">{error}</p>
       <Button variant="secondary" className="w-full" onClick={onDismiss}>
         <RotateCcw className="h-4 w-4" aria-hidden="true" />

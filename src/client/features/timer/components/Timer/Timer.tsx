@@ -4,9 +4,9 @@ import { useTimer } from "@/client/features/timer/useTimer"
 import { cn } from "@/client/lib/cn"
 
 const PHASE_TABS = [
-  { phase: "FOCUS", label: "Focus Time", color: "bg-focus text-white" },
-  { phase: "SHORT_BREAK", label: "Short Break", color: "bg-short text-white" },
-  { phase: "LONG_BREAK", label: "Long Break", color: "bg-long text-white" },
+  { phase: "FOCUS", label: "Focus Time", color: "bg-focus text-card" },
+  { phase: "SHORT_BREAK", label: "Short Break", color: "bg-short text-card" },
+  { phase: "LONG_BREAK", label: "Long Break", color: "bg-long text-card" },
 ] as const
 
 const Timer = () => {
@@ -26,12 +26,12 @@ const Timer = () => {
 
   return (
     <div className="pomodoro-timer flex flex-col items-center gap-6">
-      <div aria-hidden="true" className="flex items-center justify-center gap-2 rounded-full bg-white/70 p-1.5 shadow-sm shadow-ink/5">
+      <div aria-hidden="true" className="flex items-center justify-center gap-1.5 rounded-lg border-[3px] border-ink-soft bg-card p-1.5 shadow-[3px_3px_0_0_var(--color-ink-soft)]">
         {PHASE_TABS.map((tab) => (
           <span
             key={tab.phase}
             className={cn(
-              "rounded-full px-3.5 py-1.5 font-heading text-xs font-extrabold text-center",
+              "rounded-md px-3 py-1.5 font-heading text-[9px] font-normal text-center",
               phase === tab.phase ? tab.color : "text-muted",
             )}
           >

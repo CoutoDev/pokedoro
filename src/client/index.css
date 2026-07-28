@@ -1,19 +1,26 @@
-@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800&display=swap");
 @import "tailwindcss";
 
 @theme {
-  --font-heading: "Baloo 2", sans-serif;
+  --font-heading: "Press Start 2P", monospace;
   --font-body: "Nunito", sans-serif;
 
-  --color-focus: #ff6b6b;
-  --color-focus-soft: #ff8a8a;
-  --color-short: #5ec8f0;
-  --color-long: #7ac74c;
-  --color-ink: #3a2e4d;
-  --color-ink-soft: #4a3b63;
-  /* Darker than the mockup's #8a7ba0: that shade is 3.87:1 against white,
-     under the WCAG AA 4.5:1 floor for normal-size text. This passes 5.75:1. */
+  --color-focus: #cc3333;
+  --color-short: #4a90d9;
+  --color-long: #5a9e4a;
+  /* Overlay scrim / hard-shadow navy — darkest tone in the palette. */
+  --color-ink: #17204a;
+  /* Border / heading-text navy — one step lighter than --color-ink. */
+  --color-ink-soft: #2a3568;
+  /* Against --color-card (#fefaf0) this is 5.52:1, and 4.88:1 against
+     --color-paper (#f4ecd4) — both clear the WCAG AA 4.5:1 floor for
+     normal-size text. The mockup's own muted tone (#8a7f5f) only reaches
+     3.81:1 on --color-card, so it's not reused here. */
   --color-muted: #6e5f87;
+  --color-paper: #f4ecd4;
+  --color-paper-soft: #efe4c6;
+  --color-card: #fefaf0;
+  --color-ring-track: #e6dcc0;
 }
 
 :root {
@@ -23,6 +30,43 @@
 body {
   margin: 0;
   min-height: 100vh;
+}
+
+.bg-paper-texture {
+  background-color: var(--color-paper);
+  background-image: repeating-linear-gradient(
+    0deg,
+    var(--color-paper) 0px,
+    var(--color-paper) 22px,
+    var(--color-paper-soft) 22px,
+    var(--color-paper-soft) 24px
+  );
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0.5) rotate(-8deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08) rotate(3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
