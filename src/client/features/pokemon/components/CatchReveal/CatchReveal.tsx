@@ -1,0 +1,116 @@
+import { useEffect, useRef } from "react"
+import { LogIn, PartyPopper, RotateCcw } from "lucide-react"
+
+import { capitalizeName } from "@/client/features/pokemon/capitalizeName"
+import { pokemonSpecies } from "@/shared/data/pokemonSpecies"
+import type { CaughtPokemon } from "@/shared/types/pokemon"
+import { Button } from "@/client/ui/Button"
+
+export interface CatchRevealProps {
+  caughtPokemon: CaughtPokemon | null
+  showLoginNudge: boolean
+  error: string | null
+  onDismiss: () => void
+}
+
+const CatchReveal = ({ caughtPokemon, showLoginNudge, error, onDismiss }: CatchRevealProps) => {
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const isOpen = !!(caughtPokemon || showLoginNudge || error)
+  const species = caughtPokemon ? pokemonSpecies.find((s) => s.id === caughtPokemon.speciesId) : null
+
+  useEffect(() => {
+    if (isOpen) {
+      dialogRef.current?.showModal()
+    } else {
+      dialogRef.current?.close()
+    }
+  }, [isOpen])
+
+  if (!isOpen) return null
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDialogElement>) => {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      onDismiss()
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 sm:items-center">
+      <dialog
+        ref={dialogRef}
+        onKeyDown={handleKeyDown}
+        onCancel={(e) => {
+          e.preventDefault()
+          onDismiss()
+        }}
+        className="catch-reveal relative m-0 max-h-[86vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-none bg-white p-6 text-center shadow-xl sm:rounded-3xl"
+      >
+        {caughtPokemon && species ? (
+          <CaughtContent species={species} onDismiss={onDismiss} />
+        ) : showLoginNudge ? (
+          <LoginNudgeContent onDismiss={onDismiss} />
+        ) : error ? (
+          <ErrorContent error={error} onDismiss={onDismiss} />
+        ) : null}
+      </dialog>
+    </div>
+  )
+}
+
+function CaughtContent({
+  species,
+  onDismiss,
+}: {
+  species: { name: string; spriteUrl: string; rarity: string }
+  onDismiss: () => void
+}) {
+  return (
+    <>
+      <PartyPopper className="mx-auto h-10 w-10 text-focus" aria-hidden="true" />
+      <h2 className="mt-2 font-heading text-xl font-extrabold text-ink-soft">Caught!</h2>
+      <img src={species.spriteUrl} alt={capitalizeName(species.name)} className="mx-auto my-4 h-32 w-32" />
+      <p className="text-lg font-bold text-ink-soft">{capitalizeName(species.name)}</p>
+      <p className="mb-6 text-sm font-semibold capitalize text-muted">{species.rarity}</p>
+      <Button variant="primary" className="w-full" onClick={onDismiss}>
+        Got it!
+      </Button>
+    </>
+  )
+}
+
+function LoginNudgeContent({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <>
+      <h2 className="font-heading text-xl font-extrabold text-ink-soft">Sign in to catch Pokémon</h2>
+      <p className="mb-6 mt-2 text-sm font-semibold text-muted">
+        Build your collection by creating an account — this catch didn't count.
+      </p>
+      {/*
+        No routing/lifted Login state exists to open the header's sign-in
+        dialog programmatically (out of scope per the task's "no routing
+        library" constraint); dismissing here just closes the nudge, and the
+        always-visible header button handles the actual sign-in flow.
+      */}
+      <Button variant="primary" className="w-full" onClick={onDismiss}>
+        <LogIn className="h-4 w-4" aria-hidden="true" />
+        Sign in
+      </Button>
+    </>
+  )
+}
+
+function ErrorContent({ error, onDismiss }: { error: string; onDismiss: () => void }) {
+  return (
+    <>
+      <h2 className="font-heading text-xl font-extrabold text-ink-soft">Couldn't catch it</h2>
+      <p className="mb-6 mt-2 text-sm font-semibold text-muted">{error}</p>
+      <Button variant="secondary" className="w-full" onClick={onDismiss}>
+        <RotateCcw className="h-4 w-4" aria-hidden="true" />
+        Try again
+      </Button>
+    </>
+  )
+}
+
+export default CatchReveal

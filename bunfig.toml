@@ -36,6 +36,8 @@ coveragePathIgnorePatterns = [
   # Exclude generated files
   "src/generated/**",
   "**/*.generated.ts",
+  "src/shared/data/pokemonSpecies.ts",
+  "scripts/generatePokemonSpecies.ts",
 
   # Exclude vendor/third-party code
   "vendor/**",

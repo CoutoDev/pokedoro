@@ -1,5 +1,8 @@
+import { caughtPokemonSchema, pokemonCatchesSummarySchema } from "@/shared/schemas/pokemonCatch"
+import type { PokemonCatchesSummary } from "@/shared/schemas/pokemonCatch"
 import type { CyclePayload } from "@/shared/schemas/pomodoroCycle"
 import type { SerializedUser } from "@/shared/reviveUser"
+import type { CaughtPokemon } from "@/shared/types/pokemon"
 import type { PomodoroCycle } from "@/shared/types/pomodoro-cycle"
 
 type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string }
@@ -61,10 +64,33 @@ export async function putTimerState(timer: PomodoroCycle): Promise<void> {
   })
 }
 
-export async function postCycle(payload: CyclePayload): Promise<void> {
-  await fetch("/api/cycles", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  })
+export async function postCycle(payload: CyclePayload): Promise<CaughtPokemon | null> {
+  try {
+    const res = await fetch("/api/cycles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+    if (!res.ok) return null
+
+    const body = await res.json()
+    if (!body?.catch) return null
+
+    return caughtPokemonSchema.parse(body.catch)
+  } catch (error) {
+    console.error("Failed to record cycle:", error)
+    return null
+  }
+}
+
+export async function getPokemonCatches(): Promise<PokemonCatchesSummary | null> {
+  try {
+    const res = await fetch("/api/pokemon-catches", { credentials: "include" })
+    if (!res.ok) return null
+
+    return pokemonCatchesSummarySchema.parse(await res.json())
+  } catch (error) {
+    console.error("Failed to fetch Pokémon catches:", error)
+    return null
+  }
 }

@@ -13,7 +13,16 @@ const renderUseTimer = (
   timerDispatch = mock((_action: TimerAction) => {}),
 ) => {
   const wrapper = ({ children }: PropsWithChildren) => (
-    <TimerContext.Provider value={{ timer, timerDispatch }}>
+    <TimerContext.Provider
+      value={{
+        timer,
+        timerDispatch,
+        caughtPokemon: null,
+        showLoginNudge: false,
+        catchError: null,
+        dismissCatchReveal: () => {},
+      }}
+    >
       {children}
     </TimerContext.Provider>
   )

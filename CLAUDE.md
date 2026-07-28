@@ -51,6 +51,7 @@ client/
   features/
     timer/     Timer*, TimerContext (+ its extracted hooks), timerReducer, useTimer, timerStorage
     auth/      Login*, AuthContext, authReducer, useAuth, authFlag
+    pokemon/   CatchReveal*, Collection*, CollectionGrid*, capitalizeName — no context/reducer of its own, reads catch state from TimerContext
   ui/          Button, Input, Label — the shared design system (CVA + Tailwind 4)
   api.ts       the only place client code calls fetch() against /api/*
   App.tsx, frontend.tsx, index.css, index.html
@@ -81,6 +82,16 @@ Reducer actions (`timerReducer/timerReducer.ts`): `START_FOCUS`, `START_BREAK`, 
 
 `client/api.ts` is the only place client code calls `fetch()` against `/api/*` — `AuthContext`, `useAuth`, `useCycleRecorder`, and `useAccountSync` all go through it instead of raw `fetch()` calls scattered across files.
 
+### `client/features/pokemon` — Pokémon catching and collection
+
+Every completed phase (`FOCUS` | `SHORT_BREAK` | `LONG_BREAK`) awards a wild-caught Pokémon from the Gen 1 pool (species IDs 1–151). There is no separate `PokemonContext`: catch-reveal state (`caughtPokemon`, `showLoginNudge`, `catchError`, `dismissCatchReveal`) is a 5th hook (`useCatchReveal`) composed into `TimerContextProvider` alongside the four above, because the trigger (phase completion) already lives there — see ADR 1 in `.specs/tasks/*/implement-pokemon-catching-collection.feature.md` for the alternatives considered.
+
+- `server/pokemon/rollCatch.ts` — pure function, `rollCatch(phase, prng = Math.random)`: weights rarity tiers (`rare` | `uncommon` | `common`) per phase (`LONG_BREAK` rolls rare/uncommon far more often than `FOCUS`/`SHORT_BREAK`), then picks uniformly within the selected tier. The optional `prng` parameter exists solely so tests can inject a seeded generator instead of mocking `Math.random` globally.
+- `src/shared/data/pokemonSpecies.ts` — static, committed 151-entry module generated once by `scripts/generatePokemonSpecies.ts` from PokeAPI (never fetched at runtime). Both client and server import this same file as the single source of truth for species metadata (name, sprite, rarity) — regenerate only if PokeAPI data changes, and both sides deploy from the same commit.
+- `server/api/cycles.ts`'s `createCycle` wraps the cycle insert and the catch insert in one `db.transaction()`; `pokemon_catches.cycleId` is `UNIQUE`, so a retried POST with the same client-generated `cycleId` doesn't create a second catch — the handler catches the constraint violation and returns the existing catch row idempotently (200, not 409) as long as it belongs to the same user.
+- `useCycleRecorder` caches its `cycleId` in a `useRef` and only clears it once the timer state moves *past* the completion event (status leaves `IDLE` or `remaining` leaves `0`) — not within the same completion pass. Clearing it eagerly would let a React StrictMode double-effect-invocation mint a second `cycleId` and double-POST for what the user experiences as one phase completion; there's a regression test for this in `TimerContext.test.tsx`.
+- `CatchReveal` (native `<dialog>`, `role="dialog"`, ESC-to-dismiss) and `Collection`/`CollectionGrid` (smart/dumb split, fetch-on-mount) follow the same patterns as `TimerSettings` and `Timer`/`TimerDisplay` respectively — see Component patterns below.
+
 ### `shared/schemas/pomodoroCycle.ts` — single source of truth for wire contracts
 
 `timerStateWireSchema` and `cyclePayloadSchema` are the one definition of the `/api/timer-state` and `/api/cycles` body shapes, imported directly by both the server handlers (`server/api/timerState.ts`, `server/api/cycles.ts`) and the client's `reviveTimerState` (`features/timer/timerStorage.ts`), so the three no longer drift independently. `reviveTimerState` `safeParse`s incoming state against this schema before reviving date strings to `Date`s — a shape that doesn't validate (e.g. a stale field name from old localStorage) falls back to the caller-supplied default instead of silently merging unknown keys forward.
@@ -95,7 +106,8 @@ Reducer actions (`timerReducer/timerReducer.ts`): `START_FOCUS`, `START_BREAK`, 
 | `POST /api/auth/verify-otp` | `server/api/auth/verifyOtp.ts` | Parses email+code, rate-limits (per-IP), calls `verifyOtpAndSignIn` |
 | `GET /api/auth/me` | `server/api/auth/me.ts` | Resolves the session cookie to a user |
 | `POST /api/auth/logout` | `server/api/auth/logout.ts` | CSRF-checked; destroys the session, clears the cookie |
-| `POST /api/cycles` | `server/api/cycles.ts` | CSRF + session checked; records a completed Pomodoro cycle |
+| `POST /api/cycles` | `server/api/cycles.ts` | CSRF + session checked; records a completed Pomodoro cycle and its Pokémon catch atomically |
+| `GET /api/pokemon-catches` | `server/api/pokemonCatches.ts` | Session checked; catches grouped by species (count + most recent `caughtAt`), sorted by species ID |
 | `GET`/`PUT` `/api/timer-state` | `server/api/timerState.ts` | Session checked (PUT also CSRF-checked); syncs `PomodoroCycle` JSON per user |
 | `/*` | `src/client/index.html` | SPA fallback |
 
@@ -103,7 +115,7 @@ Reducer actions (`timerReducer/timerReducer.ts`): `START_FOCUS`, `START_BREAK`, 
 
 **`server/lib/rateLimit.ts`** wraps its state behind a `RateLimiter` interface (`InMemoryRateLimiter` implements it); `consumeRateLimit`/`resetRateLimits`/`getClientIp` are the stable call-site API. The in-memory implementation is per-instance and loses state on restart — it's the component to replace with a shared-store (e.g. Redis) implementation the day this app runs more than one server instance.
 
-**`server/db/schema.ts`** (Drizzle, SQLite): `users`, `otp_codes`, `sessions`, `pomodoro_cycles`, `timer_states` (one JSON blob per user, keyed by `userId`, validated on write against `timerStateWireSchema`).
+**`server/db/schema.ts`** (Drizzle, SQLite): `users`, `otp_codes`, `sessions`, `pomodoro_cycles`, `timer_states` (one JSON blob per user, keyed by `userId`, validated on write against `timerStateWireSchema`), `pokemon_catches` (`userId` FK + index, `cycleId` FK with a `UNIQUE` index enforcing at-most-one-catch-per-cycle, `speciesId`, `caughtAt`).
 
 ## Component patterns
 
@@ -112,6 +124,8 @@ Reducer actions (`timerReducer/timerReducer.ts`): `START_FOCUS`, `START_BREAK`, 
 - `TimerSettings` uses a `<dialog open>` element (`role="dialog"`) and **uncontrolled** inputs via `useRef`, synced from context state through a `useEffect` keyed on `isSettingsOpen` + the duration values. Numeric input parsing uses a local `safeParse(input, fallbackSeconds)` closure that falls back to the current duration on empty/invalid/zero input, then dispatches `{ minutes }` payloads.
 - Components are queried in tests by CSS class name (`.display`, `.controls`, `.pomodoro-timer`) as well as role/label queries.
 - Components use `export default`; import them accordingly (not named imports) both in app code and tests.
+- `CatchReveal` (`client/features/pokemon/components/CatchReveal/CatchReveal.tsx`) follows the same `<dialog open>` + ref pattern as `TimerSettings`, plus `showModal()`/`close()` lifecycle management and an `onKeyDown`/`onCancel` pair for ESC-to-dismiss (happy-dom doesn't wire native `<dialog>` keyboard handling, so the ESC handler is explicit, not incidental). It renders exactly one of three states — caught / login-nudge / error — from props; App.tsx is the only place it's mounted, reading its props from `useTimerContext()` so it overlays both the timer and collection views.
+- `Collection` (`client/features/pokemon/components/Collection/Collection.tsx`) is the smart container (fetches `getPokemonCatches()` on mount and whenever `auth.status` changes); `CollectionGrid` is the dumb 151-item grid, following the same split as `Timer`/`TimerDisplay`. Conditional rendering (not CSS hiding) in `App.tsx` is what makes "refetch on toggling to the collection view" work — mounting is the refetch trigger.
 
 ## Testing conventions
 

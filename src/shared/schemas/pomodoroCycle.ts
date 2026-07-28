@@ -37,6 +37,11 @@ export const cyclePayloadSchema = z.object({
   focusDuration: durationSeconds,
   shortBreakDuration: durationSeconds,
   longBreakDuration: durationSeconds,
+  /**
+   * Client-supplied cycle ID for idempotency.
+   * Enables at-most-one-catch-per-cycle guarantee via UNIQUE constraint on pokemon_catches.cycleId.
+   */
+  cycleId: z.string().min(1).max(200),
 })
 
 export type CyclePayload = z.infer<typeof cyclePayloadSchema>

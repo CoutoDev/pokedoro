@@ -5,6 +5,7 @@ import { me } from '@/server/api/auth/me'
 import { requestOtp } from '@/server/api/auth/requestOtp'
 import { verifyOtp } from '@/server/api/auth/verifyOtp'
 import { createCycle } from '@/server/api/cycles'
+import { getPokemonCatches } from '@/server/api/pokemonCatches'
 import { getTimerState, saveTimerState } from '@/server/api/timerState'
 import { purgeExpiredAuthRecords } from '@/server/lib/cleanup'
 
@@ -31,6 +32,7 @@ const server = serve({
     '/api/auth/me': { GET: me },
     '/api/auth/logout': { POST: logout },
     '/api/cycles': { POST: createCycle },
+    '/api/pokemon-catches': { GET: getPokemonCatches },
     '/api/timer-state': { GET: getTimerState, PUT: saveTimerState },
 
     // Serve index.html for all unmatched routes.

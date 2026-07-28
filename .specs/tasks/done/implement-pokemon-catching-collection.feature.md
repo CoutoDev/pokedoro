@@ -47,7 +47,7 @@ The mechanic drives engagement by tying visible progression (collection completi
 - [ ] **Rarity tier distribution is correct**: Species are distributed across three tiers (rare, uncommon, common) matching the specification
   - Given: The static species data is loaded
   - When: Species are counted by rarity classification
-  - Then: Rare tier contains exactly 5 species (Articuno, Zapdos, Moltres, Mewtwo, Mew), uncommon tier contains 18-28 species (capture_rate 20-45 from PokeAPI Gen 1 data), common tier contains remaining species
+  - Then: Rare tier contains exactly 5 species (Articuno, Zapdos, Moltres, Mewtwo, Mew), uncommon tier contains species with capture_rate 20-45 from PokeAPI Gen 1 data (verified empirically during implementation to be 55 species — the original 18-28 estimate in this criterion was wrong; the capture_rate 20-45 rule is authoritative, not the count), common tier contains remaining species
 
 - [ ] **At most one catch per recorded cycle**: Each recorded cycle generates at most one catch record
   - Given: A cycle is recorded
@@ -798,7 +798,7 @@ Phase 5: Integration + Polish (L6) — Final integration
 
 ## Phase 0: Verification + Foundation (PARALLEL, width 3)
 
-### Spike-A: Verify PokeAPI Gen 1 endpoint structure and rate-limit behavior
+### Spike-A: Verify PokeAPI Gen 1 endpoint structure and rate-limit behavior [DONE]
 
 **Model:** general-purpose  
 **Agent:** general-purpose  
@@ -852,7 +852,7 @@ Phase 5: Integration + Polish (L6) — Final integration
 
 ---
 
-### Step 1: Set up types, schemas, and database schema
+### Step 1: Set up types, schemas, and database schema [DONE]
 
 **Model:** opus  
 **Agent:** sdd:developer  
@@ -884,12 +884,12 @@ Phase 5: Integration + Polish (L6) — Final integration
 
 **Subtasks**
 
-- [ ] Create `src/shared/types/pokemon.ts` with PokemonSpecies and CaughtPokemon interfaces
-- [ ] Create `src/shared/schemas/pokemonCatch.ts` with Zod schema definitions and type exports
-- [ ] Extend `src/server/db/schema.ts` with pokemon_catches table (Drizzle sqliteTable)
-- [ ] Run `bun run db:generate` to create migration in `src/server/db/migrations/`
-- [ ] Verify type checking: `bunx tsc --noEmit`
-- [ ] Write unit tests for schema validation (parse valid/invalid data)
+- [X] Create `src/shared/types/pokemon.ts` with PokemonSpecies and CaughtPokemon interfaces
+- [X] Create `src/shared/schemas/pokemonCatch.ts` with Zod schema definitions and type exports
+- [X] Extend `src/server/db/schema.ts` with pokemon_catches table (Drizzle sqliteTable)
+- [X] Run `bun run db:generate` to create migration in `src/server/db/migrations/`
+- [X] Verify type checking: `bunx tsc --noEmit`
+- [X] Write unit tests for schema validation (parse valid/invalid data)
 
 **Complexity**: Medium
 
@@ -1014,7 +1014,7 @@ Does the implementation follow CLAUDE.md patterns for type definitions and schem
 
 ## Phase 1: Data Generation (SEQUENTIAL)
 
-### Step 2: Generate static Pokemon species data
+### Step 2: Generate static Pokemon species data [DONE]
 
 **Model:** opus  
 **Agent:** sdd:developer  
@@ -1087,7 +1087,7 @@ Does the implementation follow CLAUDE.md patterns for type definitions and schem
 |----|----------|----------|------------|-----------|
 | 2.1 | Does generated file contain exactly 151 PokemonSpecies entries with IDs 1–151? | hard_rule | essential | Gen 1 spec requires all 151; missing or duplicate entries break grid and selection |
 | 2.2 | Do all entries have valid sprite URLs (non-empty strings)? | hard_rule | essential | Step 9 renders sprites; missing URLs cause UI to break |
-| 2.3 | Are rarity tiers distributed correctly (5 rare, 18–28 uncommon, rest common)? | hard_rule | essential | Rarity distribution affects catch probabilities; incorrect tiers break UX intent |
+| 2.3 | Are rarity tiers distributed correctly (5 rare, 55 uncommon [capture_rate 20-45, verified against real PokeAPI Gen 1 data — supersedes an earlier wrong 18-28 estimate], rest common)? | hard_rule | essential | Rarity distribution affects catch probabilities; incorrect tiers break UX intent |
 | 2.4 | Does generated file include 'DO NOT EDIT MANUALLY' header comment? | hard_rule | important | Prevents accidental manual modification of generated data |
 | 2.5 | Has script implemented retry logic with Spike-A findings (429 backoff, 503 handling, timeouts)? | hard_rule | essential | Script robustness depends on verified API behavior from Spike-A |
 | 2.6 | Does script validate data against PokemonSpeciesArraySchema before writing? | hard_rule | essential | Prevents corrupted data from being committed |
@@ -1113,7 +1113,7 @@ Does the script implement robust retry logic that handles rate limits (429), ser
 
 Does the generated file contain exactly 151 species with valid data (IDs 1–151, non-empty URLs, correct rarity tiers)?
 
-**Instruction**: Verify all 151 IDs present, no gaps, no duplicates. Spot-check sprite URLs are non-empty strings. Count rarity tiers: 5 rare (Articuno, Zapdos, Moltres, Mewtwo, Mew), 18–28 uncommon, rest common.
+**Instruction**: Verify all 151 IDs present, no gaps, no duplicates. Spot-check sprite URLs are non-empty strings. Count rarity tiers: 5 rare (Articuno, Zapdos, Moltres, Mewtwo, Mew), 55 uncommon (capture_rate 20-45 against real Gen 1 data — the count is empirically 55, not the originally-estimated 18-28), rest common.
 
 - 1: Missing species, duplicate IDs, or invalid sprite URLs.
 - 2: All 151 present but rarity distribution incorrect (DEFAULT — must justify tier counts).
@@ -1165,7 +1165,7 @@ Does the script follow project patterns (file location, naming, error handling s
 
 ### AC: Rarity Distribution
 - [unit] Rare tier contains exactly 5 species (Articuno, Zapdos, Moltres, Mewtwo, Mew)
-- [unit] Uncommon tier contains 18–28 species (capture_rate 20–45) [BVA: B-1=17 too few, B=18 min valid, B+1=19; B-1=27, B=28 max valid, B+1=29 too many]
+- [unit] Uncommon tier contains species with capture_rate 20–45 (empirically 55 species against real Gen 1 data; supersedes an earlier wrong 18-28 estimate in this spec)
 - [unit] Remaining species classified as common
 
 ### AC: Data Validation
@@ -1181,7 +1181,7 @@ Does the script follow project patterns (file location, naming, error handling s
 
 ---
 
-### Step 3: Implement rollCatch pure function for species selection
+### Step 3: Implement rollCatch pure function for species selection [DONE]
 
 **Model:** opus  
 **Agent:** sdd:developer  
@@ -1345,7 +1345,7 @@ Does the implementation follow project patterns for pure functions?
 
 ---
 
-### Spike-B: Verify Bun SQLite UNIQUE constraint error handling
+### Spike-B: Verify Bun SQLite UNIQUE constraint error handling [DONE]
 
 **Model:** general-purpose  
 **Agent:** general-purpose  

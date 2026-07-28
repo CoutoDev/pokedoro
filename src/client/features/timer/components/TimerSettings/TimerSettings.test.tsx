@@ -10,7 +10,16 @@ const renderSettings = (
   timer = initialTimerState,
   timerDispatch = mock((_action: TimerAction) => {}),
 ) => render(
-  <TimerContext.Provider value={{ timer, timerDispatch }}>
+  <TimerContext.Provider
+    value={{
+      timer,
+      timerDispatch,
+      caughtPokemon: null,
+      showLoginNudge: false,
+      catchError: null,
+      dismissCatchReveal: () => {},
+    }}
+  >
     <TimerSettings />
   </TimerContext.Provider>,
 )

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
-import { useContext } from 'react'
+import { StrictMode, useContext } from 'react'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 
 import { TimerContext, TimerContextProvider, initialTimerState, useTimerContext } from './TimerContext'
@@ -16,12 +16,16 @@ const STORAGE_KEY = 'pokedoro-timer-state'
  * RUNNING, so the interval-cleanup effect activates).
  */
 function StateProbe() {
-  const { timer, timerDispatch } = useContext(TimerContext)
+  const { timer, timerDispatch, caughtPokemon, showLoginNudge, catchError, dismissCatchReveal } =
+    useContext(TimerContext)
 
   return (
     <div>
       <span data-testid="status">{timer.status}</span>
       <span data-testid="remaining">{timer.remaining}</span>
+      <span data-testid="caught-species">{caughtPokemon?.speciesId ?? ''}</span>
+      <span data-testid="login-nudge">{String(showLoginNudge)}</span>
+      <span data-testid="catch-error">{catchError ?? ''}</span>
       <button
         onClick={() => timerDispatch({
           type: 'START_FOCUS',
@@ -33,17 +37,19 @@ function StateProbe() {
       <button onClick={() => timerDispatch({ type: 'PAUSE', payload: { pausedAt: new Date() } })}>
         Pause
       </button>
+      <button onClick={dismissCatchReveal}>Dismiss</button>
     </div>
   )
 }
 
 function HookProbe() {
-  const { timer, timerDispatch } = useTimerContext()
+  const { timer, timerDispatch, dismissCatchReveal } = useTimerContext()
 
   return (
     <div>
       <span data-testid="hook-status">{timer.status}</span>
       <button onClick={() => timerDispatch({ type: 'RESET' })}>Dispatch</button>
+      <button onClick={dismissCatchReveal}>Dismiss</button>
     </div>
   )
 }
@@ -174,7 +180,7 @@ describe('TimerContextProvider', () => {
     calculateRemainingSpy.mockRestore()
   })
 
-  it('posts the completed cycle to /api/cycles when the user is authenticated', () => {
+  it('posts the completed cycle to /api/cycles when the user is authenticated', async () => {
     const { tick } = mockIntervalTimers()
     const calculateRemainingSpy = spyOn(calculateRemainingModule, 'calculateRemaining')
     calculateRemainingSpy.mockReturnValue(0)
@@ -189,6 +195,7 @@ describe('TimerContextProvider', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Start' }))
     tick()
+    await flush()
 
     expect(fetchSpy).toHaveBeenCalledWith('/api/cycles', expect.objectContaining({ method: 'POST' }))
     expect(screen.getByTestId('status').textContent).toBe('IDLE')
@@ -228,6 +235,130 @@ describe('TimerContextProvider', () => {
 
     expect(fetchSpy).toHaveBeenCalledWith('/api/cycles', expect.objectContaining({ method: 'POST' }))
     expect(screen.getByTestId('status').textContent).toBe('IDLE')
+
+    calculateRemainingSpy.mockRestore()
+  })
+
+  it('reveals the caught Pokemon in context state when the catch succeeds', async () => {
+    const { tick } = mockIntervalTimers()
+    const calculateRemainingSpy = spyOn(calculateRemainingModule, 'calculateRemaining')
+    calculateRemainingSpy.mockReturnValue(0)
+    ;(spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
+      new Response(JSON.stringify({ ok: true, catch: { speciesId: 25, caughtAt: '2026-01-01T00:00:00.000Z' } }), { status: 201 }),
+    ))
+
+    renderWithAuthState(<StateProbe />, {
+      user: { id: 'user-1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+      status: 'authenticated',
+      error: null,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    tick()
+    await flush()
+
+    expect(screen.getByTestId('caught-species').textContent).toBe('25')
+
+    calculateRemainingSpy.mockRestore()
+  })
+
+  it('shows the login nudge in context state when a guest completes a phase', () => {
+    const { tick } = mockIntervalTimers()
+    const calculateRemainingSpy = spyOn(calculateRemainingModule, 'calculateRemaining')
+    calculateRemainingSpy.mockReturnValue(0)
+
+    renderWithProvider(<StateProbe />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    tick()
+
+    expect(screen.getByTestId('login-nudge').textContent).toBe('true')
+
+    calculateRemainingSpy.mockRestore()
+  })
+
+  it('sets a catch error in context state when the catch request fails, without blocking the timer reset', async () => {
+    const { tick } = mockIntervalTimers()
+    const calculateRemainingSpy = spyOn(calculateRemainingModule, 'calculateRemaining')
+    calculateRemainingSpy.mockReturnValue(0)
+    ;(spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
+      new Response(JSON.stringify({ ok: false, error: 'boom' }), { status: 500 }),
+    ))
+
+    renderWithAuthState(<StateProbe />, {
+      user: { id: 'user-1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+      status: 'authenticated',
+      error: null,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    tick()
+    await flush()
+
+    expect(screen.getByTestId('catch-error').textContent).toBe("Couldn't catch it — try again")
+    expect(screen.getByTestId('status').textContent).toBe('IDLE')
+
+    calculateRemainingSpy.mockRestore()
+  })
+
+  it('dismissCatchReveal clears the caught Pokemon, login nudge, and catch error together', async () => {
+    const { tick } = mockIntervalTimers()
+    const calculateRemainingSpy = spyOn(calculateRemainingModule, 'calculateRemaining')
+    calculateRemainingSpy.mockReturnValue(0)
+    ;(spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
+      new Response(JSON.stringify({ ok: true, catch: { speciesId: 25, caughtAt: '2026-01-01T00:00:00.000Z' } }), { status: 201 }),
+    ))
+
+    renderWithAuthState(<StateProbe />, {
+      user: { id: 'user-1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+      status: 'authenticated',
+      error: null,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    tick()
+    await flush()
+    expect(screen.getByTestId('caught-species').textContent).toBe('25')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
+
+    expect(screen.getByTestId('caught-species').textContent).toBe('')
+    expect(screen.getByTestId('login-nudge').textContent).toBe('false')
+    expect(screen.getByTestId('catch-error').textContent).toBe('')
+
+    calculateRemainingSpy.mockRestore()
+  })
+
+  it('reuses the same cycleId across a StrictMode double effect invocation (no duplicate catch on rapid completion)', () => {
+    const { tick } = mockIntervalTimers()
+    const calculateRemainingSpy = spyOn(calculateRemainingModule, 'calculateRemaining')
+    calculateRemainingSpy.mockReturnValue(0)
+    const fetchSpy = (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
+      new Response(JSON.stringify({ ok: true, catch: { speciesId: 1, caughtAt: '2026-01-01T00:00:00.000Z' } }), { status: 201 }),
+    ))
+
+    render(
+      <StrictMode>
+        <AuthContext.Provider
+          value={{
+            auth: {
+              user: { id: 'user-1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+              status: 'authenticated',
+              error: null,
+            },
+            authDispatch: () => {},
+          }}
+        >
+          <TimerContextProvider><StateProbe /></TimerContextProvider>
+        </AuthContext.Provider>
+      </StrictMode>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    tick()
+
+    const cycleCalls = fetchSpy.mock.calls.filter(([url]: [string]) => url === '/api/cycles')
+    const cycleIds = cycleCalls.map(([, init]: [string, RequestInit]) => JSON.parse(init.body as string).cycleId)
+    // Whether StrictMode double-invokes the effect or not, every POST for
+    // this single completion must carry the same cycleId — a regression
+    // test for a bug where the cached id was cleared within the same
+    // completion pass, minting a second id on double-invocation.
+    expect(new Set(cycleIds).size).toBe(1)
 
     calculateRemainingSpy.mockRestore()
   })
@@ -531,5 +662,11 @@ describe('useTimerContext', () => {
     // not throw and should leave the (static) default state unaffected.
     expect(() => fireEvent.click(screen.getByRole('button', { name: 'Dispatch' }))).not.toThrow()
     expect(screen.getByTestId('hook-status').textContent).toBe('IDLE')
+  })
+
+  it('the default context dismissCatchReveal outside a provider is a callable no-op', () => {
+    render(<HookProbe />)
+
+    expect(() => fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))).not.toThrow()
   })
 })

@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core'
 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
@@ -41,3 +41,23 @@ export const timerStates = sqliteTable('timer_states', {
   state: text('state').notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 })
+
+/**
+ * Pokemon catches: records each caught species linked to a completed cycle.
+ * cycleId is UNIQUE to enforce at-most-one-catch-per-cycle (idempotency guard).
+ * userId index enables efficient collection queries (GROUP BY, sorting).
+ */
+export const pokemonCatches = sqliteTable(
+  'pokemon_catches',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull().references(() => users.id),
+    cycleId: text('cycle_id').notNull().references(() => pomodoroCycles.id),
+    speciesId: integer('species_id').notNull(),
+    caughtAt: integer('caught_at', { mode: 'timestamp' }).notNull(),
+  },
+  (table) => [
+    index('pokemon_catches_user_id_idx').on(table.userId),
+    uniqueIndex('pokemon_catches_cycle_id_idx').on(table.cycleId),
+  ]
+)

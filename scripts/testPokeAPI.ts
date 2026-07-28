@@ -271,8 +271,12 @@ async function testRateLimiting() {
   const results = await Promise.all(requests);
   const endTime = Date.now();
 
-  const status429 = results.filter((r) => r.status === 429);
-  const status200 = results.filter((r) => r.status === 200);
+  const withHeaders = (
+    r: (typeof results)[number]
+  ): r is Extract<(typeof results)[number], { headers: unknown }> => "headers" in r;
+
+  const status429 = results.filter(withHeaders).filter((r) => r.status === 429);
+  const status200 = results.filter(withHeaders).filter((r) => r.status === 200);
   const errors = results.filter((r) => r.status === "error");
 
   console.log(`Total Requests: 50`);
@@ -290,7 +294,7 @@ async function testRateLimiting() {
     console.log("\n✓ No 429 responses encountered");
   }
 
-  if (status200.length > 0 && status200[0].headers.rateLimit) {
+  if (status200[0]?.headers.rateLimit) {
     console.log(
       `\nRate-Limit Header: X-RateLimit-Remaining=${status200[0].headers.rateLimit}`
     );
