@@ -44,4 +44,12 @@ bun run db:generate    # generate a Drizzle migration from schema.ts changes
 - **Swappable rate limiting.** Rate limiting sits behind a `RateLimiter` interface. The current implementation is in-memory and per-instance — a deliberate seam for swapping in a shared store (e.g. Redis) if the app ever runs more than one server instance.
 - **Test-driven, coverage-enforced.** Client features, UI components, and the API client carry colocated tests held to 100% function/line coverage; pure utility functions are tested for behavior without being coverage-gated.
 
-See `CLAUDE.md` for the full architecture reference, including the route table, component patterns, and testing conventions.
+### Reference docs
+
+- [Architecture](docs/architecture.md) — the `client`/`server`/`shared` split and the Context + Reducer feature-folder pattern
+- [Timer feature](docs/timer-feature.md) — `TimerContext`, its reducer, and its composed hooks
+- [Pokémon feature](docs/pokemon-feature.md) — catch rolling, species data, and idempotent cycle recording
+- [Server](docs/server.md) — route table, auth flow, rate limiting, DB schema
+- [Conventions](docs/conventions.md) — component patterns and testing conventions
+
+`CLAUDE.md` remains the full, canonical reference (including dev commands) that these docs are excerpted from.
