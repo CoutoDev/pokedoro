@@ -3,6 +3,7 @@ import { LogIn, LogOut, User, X } from "lucide-react"
 
 import { useAuth } from "@/client/features/auth/useAuth"
 import { Button } from "@/client/ui/Button"
+import { Dialog } from "@/client/ui/Dialog"
 
 import LoginForm from "./LoginForm"
 
@@ -76,48 +77,40 @@ const Login = () => {
         )}
         {isAuthenticated ? 'Account' : 'Sign in'}
       </Button>
-      {isLoginOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/60 sm:items-center">
-          <dialog
-            open
-            id="login-modal"
-            className="login relative m-0 max-h-[86vh] w-full max-w-md overflow-y-auto rounded-t-2xl border-4 border-b-0 border-ink bg-card p-6 shadow-none sm:rounded-2xl sm:border-b-4"
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-heading text-base font-normal text-ink-soft">
-                {isAuthenticated ? 'Account' : 'Sign in'}
-              </h2>
-              <Button variant="ghost" size="sm" onClick={handleCloseLogin} aria-label="Close">
-                <X className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </div>
-            {isAuthenticated ? (
-              <div className="flex flex-col gap-4">
-                <p className="text-base font-bold text-ink-soft">Signed in as {user.email}</p>
-                <Button variant="primary" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4" aria-hidden="true" />
-                  Sign out
-                </Button>
-              </div>
-            ) : (
-              <LoginForm
-                step={step}
-                email={email}
-                code={code}
-                error={error}
-                isSubmitting={isSubmitting}
-                handlers={{
-                  onEmailChange: handleEmailChange,
-                  onCodeChange: handleCodeChange,
-                  onSubmitEmail: handleSubmitEmail,
-                  onSubmitCode: handleSubmitCode,
-                  onBack: handleBack,
-                }}
-              />
-            )}
-          </dialog>
+      <Dialog open={isLoginOpen} onClose={handleCloseLogin} id="login-modal" className="login">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-heading text-base font-normal text-ink-soft">
+            {isAuthenticated ? 'Account' : 'Sign in'}
+          </h2>
+          <Button variant="ghost" size="sm" onClick={handleCloseLogin} aria-label="Close">
+            <X className="h-4 w-4" aria-hidden="true" />
+          </Button>
         </div>
-      )}
+        {isAuthenticated ? (
+          <div className="flex flex-col gap-4">
+            <p className="text-base font-bold text-ink-soft">Signed in as {user.email}</p>
+            <Button variant="primary" onClick={handleLogout}>
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              Sign out
+            </Button>
+          </div>
+        ) : (
+          <LoginForm
+            step={step}
+            email={email}
+            code={code}
+            error={error}
+            isSubmitting={isSubmitting}
+            handlers={{
+              onEmailChange: handleEmailChange,
+              onCodeChange: handleCodeChange,
+              onSubmitEmail: handleSubmitEmail,
+              onSubmitCode: handleSubmitCode,
+              onBack: handleBack,
+            }}
+          />
+        )}
+      </Dialog>
     </>
   )
 }
