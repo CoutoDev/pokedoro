@@ -10,7 +10,7 @@ export const pokemonRaritySchema = z.enum(['rare', 'uncommon', 'common'])
  */
 export const caughtPokemonSchema = z.object({
   speciesId: z.number().int().min(1).max(151),
-  caughtAt: z.string().datetime(),
+  caughtAt: z.iso.datetime(),
 })
 
 export type CaughtPokemon = z.infer<typeof caughtPokemonSchema>
@@ -22,7 +22,7 @@ export const pokemonCatchesSummarySchema = z.array(
   z.object({
     speciesId: z.number().int().min(1).max(151),
     count: z.number().int().min(1),
-    lastCaughtAt: z.string().datetime(),
+    lastCaughtAt: z.iso.datetime(),
   })
 )
 
