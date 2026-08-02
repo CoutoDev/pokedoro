@@ -27,7 +27,7 @@ const CollectionGrid = ({ catches, handleSpeciesClick }: CollectionGridProps) =>
                 {caught.count}
               </span>
             )}
-            <p className="mt-1.5 w-full truncate text-center text-[10px] font-heading font-normal text-ink-soft"> #{species.id.toString().padStart(3, '0')}</p>
+            <p className="mt-1.5 w-full truncate text-center text-[10px] font-heading font-normal text-ink-soft">{displayName}</p>
           </div>
         ) : (
           <div key={species.id} className="flex flex-col items-center rounded-lg border-[3px] border-dashed border-muted p-2 opacity-60">
