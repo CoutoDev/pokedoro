@@ -5,12 +5,25 @@ import { useAuthContext } from "@/client/features/auth/AuthContext"
 import type { PokemonCatchesSummary } from "@/shared/schemas/pokemonCatch"
 
 import CollectionGrid from "./CollectionGrid"
+import type { PokemonSpecies } from "@/shared/types/pokemon"
+import CollectionItem from "./CollectionItem"
 
 const Collection = () => {
   const { auth } = useAuthContext()
   const [catches, setCatches] = useState<PokemonCatchesSummary>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isPokemonModalOpen, setIsPokemonModalOpen] = useState(false)
+  const [selectedSpecies, setSelectedSpecies] = useState<{species: PokemonSpecies, count: Number}>()
+
+  const handleSpeciesClick = (species: PokemonSpecies, count: number) => {
+    setIsPokemonModalOpen(true)
+    setSelectedSpecies({species, count})
+  }
+
+  const handleCloseModal = () => {
+    setIsPokemonModalOpen(false)
+  }
 
   useEffect(() => {
     if (auth.status !== 'authenticated') {
@@ -57,7 +70,14 @@ const Collection = () => {
     return <p className="p-6 text-center text-sm font-semibold text-focus">{error}</p>
   }
 
-  return <CollectionGrid catches={catches} />
+  return (
+    <>
+      {isPokemonModalOpen && (
+        <CollectionItem pokemon={selectedSpecies!.species} count={selectedSpecies!.count} handleCloseModal={handleCloseModal} />
+      )}
+      <CollectionGrid handleSpeciesClick={handleSpeciesClick} catches={catches} />
+    </>
+  )
 }
 
 export default Collection

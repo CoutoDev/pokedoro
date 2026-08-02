@@ -7,7 +7,7 @@ import type { CaughtPokemon, PokemonRarity } from "@/shared/types/pokemon"
 import { Button } from "@/client/ui/Button"
 import { cn } from "@/client/lib/cn"
 
-const RARITY_BADGE: Record<PokemonRarity, string> = {
+export const RARITY_BADGE: Record<PokemonRarity, string> = {
   rare: "bg-focus text-card",
   uncommon: "bg-short text-card",
   common: "bg-ink-soft text-card",
@@ -51,7 +51,8 @@ const CatchReveal = ({ caughtPokemon, showLoginNudge, error, onDismiss }: CatchR
           e.preventDefault()
           onDismiss()
         }}
-        className="catch-reveal relative m-0 max-h-[86vh] w-full max-w-md overflow-y-auto rounded-t-2xl border-4 border-b-0 border-ink bg-card p-6 text-center shadow-none sm:rounded-2xl sm:border-b-4"
+        open
+        className="catch-reveal relative m-0 top-auto max-h-[86vh] w-full max-w-md overflow-y-auto rounded-t-2xl border-4 border-b-0 border-ink bg-card p-6 text-center shadow-none sm:rounded-2xl sm:border-b-4 sm:m-auto sm:top-0"
       >
         {caughtPokemon && species ? (
           <CaughtContent species={species} onDismiss={onDismiss} />
