@@ -151,6 +151,7 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /collection/i }))
     await flush()
+    fireEvent.click(screen.getByRole('button', { name: 'Caught' }))
 
     expect(screen.getAllByText('Pikachu')).toHaveLength(1)
     expect(screen.getByText('2')).not.toBeNull()

@@ -1,12 +1,17 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 import { getPokemonCatches } from "@/client/api"
 import { useAuthContext } from "@/client/features/auth/AuthContext"
+import { pokemonSpecies } from "@/shared/data/pokemonSpecies"
 import type { PokemonCatchesSummary } from "@/shared/schemas/pokemonCatch"
-
-import CollectionGrid from "./CollectionGrid"
 import type { PokemonSpecies } from "@/shared/types/pokemon"
+
+import CollectionFilters, { type CollectionFilter } from "./CollectionFilters"
+import CollectionGrid from "./CollectionGrid"
 import CollectionItem from "./CollectionItem"
+import CollectionPagination from "./CollectionPagination"
+
+const PAGE_SIZE = 10
 
 const Collection = () => {
   const { auth } = useAuthContext()
@@ -14,15 +19,22 @@ const Collection = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isPokemonModalOpen, setIsPokemonModalOpen] = useState(false)
-  const [selectedSpecies, setSelectedSpecies] = useState<{species: PokemonSpecies, count: Number}>()
+  const [selectedSpecies, setSelectedSpecies] = useState<{ species: PokemonSpecies; count: Number }>()
+  const [filter, setFilter] = useState<CollectionFilter>('all')
+  const [page, setPage] = useState(1)
 
   const handleSpeciesClick = (species: PokemonSpecies, count: number) => {
     setIsPokemonModalOpen(true)
-    setSelectedSpecies({species, count})
+    setSelectedSpecies({ species, count })
   }
 
   const handleCloseModal = () => {
     setIsPokemonModalOpen(false)
+  }
+
+  const handleFilterChange = (nextFilter: CollectionFilter) => {
+    setFilter(nextFilter)
+    setPage(1)
   }
 
   useEffect(() => {
@@ -51,6 +63,22 @@ const Collection = () => {
     }
   }, [auth.status])
 
+  const items = useMemo(() => {
+    const caughtMap = new Map(catches.map((c) => [c.speciesId, c]))
+
+    return pokemonSpecies
+      .map((species) => ({ species, caught: caughtMap.get(species.id) ?? null }))
+      .filter((item) => {
+        if (filter === 'caught') return item.caught !== null
+        if (filter === 'uncaught') return item.caught === null
+        return true
+      })
+  }, [catches, filter])
+
+  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const pageItems = items.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
   if (auth.status !== 'authenticated') {
     return (
       <div className="flex flex-col items-center gap-2 rounded-2xl border-[3px] border-dashed border-muted bg-card p-8 text-center">
@@ -71,12 +99,19 @@ const Collection = () => {
   }
 
   return (
-    <>
+    <div className="flex flex-col gap-4">
       {isPokemonModalOpen && (
         <CollectionItem pokemon={selectedSpecies!.species} count={selectedSpecies!.count} handleCloseModal={handleCloseModal} />
       )}
-      <CollectionGrid handleSpeciesClick={handleSpeciesClick} catches={catches} />
-    </>
+      <CollectionFilters filter={filter} onChange={handleFilterChange} />
+      <CollectionGrid handleSpeciesClick={handleSpeciesClick} items={pageItems} />
+      <CollectionPagination
+        page={currentPage}
+        totalPages={totalPages}
+        onPrevious={() => setPage((p) => Math.max(1, p - 1))}
+        onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+      />
+    </div>
   )
 }
 
