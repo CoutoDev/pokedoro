@@ -161,6 +161,7 @@ describe('pokemonSpeciesSchema', () => {
       name: 'Pikachu',
       spriteUrl: 'https://example.com/pikachu.png',
       rarity: 'common',
+      types: ['normal'],
     })
     expect(valid.id).toBe(25)
     expect(valid.name).toBe('Pikachu')
@@ -174,6 +175,7 @@ describe('pokemonSpeciesSchema', () => {
         name: 'Bulbasaur',
         spriteUrl: 'https://example.com/bulbasaur.png',
         rarity: 'common',
+        types: ['normal'],
       })
     ).not.toThrow()
 
@@ -184,6 +186,7 @@ describe('pokemonSpeciesSchema', () => {
         name: 'Unknown',
         spriteUrl: 'https://example.com/unknown.png',
         rarity: 'common',
+        types: ['normal'],
       })
     ).toThrow()
 
@@ -194,6 +197,7 @@ describe('pokemonSpeciesSchema', () => {
         name: 'Mew',
         spriteUrl: 'https://example.com/mew.png',
         rarity: 'rare',
+        types: ['normal'],
       })
     ).not.toThrow()
 
@@ -204,6 +208,7 @@ describe('pokemonSpeciesSchema', () => {
         name: 'Chikorita',
         spriteUrl: 'https://example.com/chikorita.png',
         rarity: 'common',
+        types: ['normal'],
       })
     ).toThrow()
   })
@@ -215,6 +220,7 @@ describe('pokemonSpeciesSchema', () => {
         name: '',
         spriteUrl: 'https://example.com/pikachu.png',
         rarity: 'common',
+        types: ['normal'],
       })
     ).toThrow()
   })
@@ -234,9 +240,9 @@ describe('pokemonSpeciesSchema', () => {
 describe('pokemonSpeciesArraySchema', () => {
   it('accepts array of valid pokemon species', () => {
     const valid = pokemonSpeciesArraySchema.parse([
-      { id: 1, name: 'Bulbasaur', spriteUrl: 'https://example.com/bulbasaur.png', rarity: 'common' },
-      { id: 25, name: 'Pikachu', spriteUrl: 'https://example.com/pikachu.png', rarity: 'common' },
-      { id: 151, name: 'Mew', spriteUrl: 'https://example.com/mew.png', rarity: 'rare' },
+      { id: 1, name: 'Bulbasaur', spriteUrl: 'https://example.com/bulbasaur.png', rarity: 'common', types: ['normal'] },
+      { id: 25, name: 'Pikachu', spriteUrl: 'https://example.com/pikachu.png', rarity: 'common', types: ['normal'] },
+      { id: 151, name: 'Mew', spriteUrl: 'https://example.com/mew.png', rarity: 'rare', types: ['normal'] },
     ])
     expect(valid).toHaveLength(3)
   })
@@ -249,9 +255,20 @@ describe('pokemonSpeciesArraySchema', () => {
   it('rejects array with invalid species', () => {
     expect(() =>
       pokemonSpeciesArraySchema.parse([
-        { id: 1, name: 'Bulbasaur', spriteUrl: 'https://example.com/bulbasaur.png', rarity: 'common' },
-        { id: 999, name: 'Invalid', spriteUrl: 'https://example.com/invalid.png', rarity: 'common' }, // Invalid ID
+        { id: 1, name: 'Bulbasaur', spriteUrl: 'https://example.com/bulbasaur.png', rarity: 'common', types: ['normal'] },
+        { id: 999, name: 'Invalid', spriteUrl: 'https://example.com/invalid.png', rarity: 'common', types: ['normal'] }, // Invalid ID
       ])
     ).toThrow()
+  })
+})
+
+describe('pokemonSpeciesSchema types', () => {
+  const base = { id: 25, name: 'Pikachu', spriteUrl: 'https://example.com/p.png', rarity: 'common' }
+
+  it('requires 1-2 known types', () => {
+    expect(() => pokemonSpeciesSchema.parse({ ...base, types: [] })).toThrow()
+    expect(() => pokemonSpeciesSchema.parse({ ...base, types: ['normal', 'fire', 'water'] })).toThrow()
+    expect(() => pokemonSpeciesSchema.parse({ ...base, types: ['cosmic'] })).toThrow()
+    expect(() => pokemonSpeciesSchema.parse({ ...base, types: ['electric'] })).not.toThrow()
   })
 })

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, mock } from 'bun:test'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 
+import { initialCollectionFilters, type CollectionFilterState } from '../../filterCollection'
 import CollectionFilters from './CollectionFilters'
 
 afterEach(() => {
@@ -8,28 +9,48 @@ afterEach(() => {
   mock.restore()
 })
 
+const setup = (filters: CollectionFilterState = initialCollectionFilters, count = 151) => {
+  const onChange = mock((_f: CollectionFilterState) => {})
+  render(<CollectionFilters filters={filters} onChange={onChange} resultCount={count} />)
+  return onChange
+}
+
 describe('CollectionFilters', () => {
-  it('renders all three filter options', () => {
-    render(<CollectionFilters filter="all" onChange={() => {}} />)
-
-    expect(screen.getByRole('button', { name: 'All' })).not.toBeNull()
-    expect(screen.getByRole('button', { name: 'Caught' })).not.toBeNull()
-    expect(screen.getByRole('button', { name: 'Uncaught' })).not.toBeNull()
-  })
-
-  it('marks the active filter as pressed', () => {
-    render(<CollectionFilters filter="caught" onChange={() => {}} />)
+  it('renders status buttons and marks the active one as pressed', () => {
+    setup({ ...initialCollectionFilters, status: 'caught' })
 
     expect(screen.getByRole('button', { name: 'Caught' }).getAttribute('aria-pressed')).toBe('true')
     expect(screen.getByRole('button', { name: 'All' }).getAttribute('aria-pressed')).toBe('false')
   })
 
-  it('calls onChange with the clicked filter', () => {
-    const onChange = mock((_filter: string) => {})
-    render(<CollectionFilters filter="all" onChange={onChange} />)
-
+  it('emits the full filter state when the status changes', () => {
+    const onChange = setup()
     fireEvent.click(screen.getByRole('button', { name: 'Uncaught' }))
+    expect(onChange).toHaveBeenCalledWith({ ...initialCollectionFilters, status: 'uncaught' })
+  })
 
-    expect(onChange).toHaveBeenCalledWith('uncaught')
+  it('emits search, type and rarity changes', () => {
+    const onChange = setup()
+
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'char' } })
+    expect(onChange).toHaveBeenLastCalledWith({ ...initialCollectionFilters, search: 'char' })
+
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'water' } })
+    expect(onChange).toHaveBeenLastCalledWith({ ...initialCollectionFilters, type: 'water' })
+
+    fireEvent.change(screen.getByLabelText('Rarity'), { target: { value: 'rare' } })
+    expect(onChange).toHaveBeenLastCalledWith({ ...initialCollectionFilters, rarity: 'rare' })
+  })
+
+  it('shows the result count and hides Clear filters when nothing is active', () => {
+    setup(initialCollectionFilters, 151)
+    expect(screen.getByRole('status').textContent).toBe('151 Pokémon found')
+    expect(screen.queryByRole('button', { name: 'Clear filters' })).toBeNull()
+  })
+
+  it('resets everything via Clear filters', () => {
+    const onChange = setup({ ...initialCollectionFilters, search: 'x', type: 'fire' }, 0)
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
+    expect(onChange).toHaveBeenCalledWith(initialCollectionFilters)
   })
 })

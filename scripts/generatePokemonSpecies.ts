@@ -40,6 +40,7 @@ interface PokemonRaw {
   sprites: {
     front_default: string | null
   }
+  types: { slot: number; type: { name: string } }[]
 }
 
 // ============================================================================
@@ -173,6 +174,7 @@ async function fetchSpecies(id: number): Promise<PokemonSpecies> {
     name: speciesData.name,
     spriteUrl,
     rarity,
+    types: [...pokemonData.types].sort((a, b) => a.slot - b.slot).map((t) => t.type.name) as PokemonSpecies['types'],
   }
 }
 
@@ -185,7 +187,7 @@ function generateModuleCode(species: PokemonSpecies[]): string {
   const speciesCode = species
     .map(
       (s) =>
-        `  {\n    id: ${s.id},\n    name: '${s.name}',\n    spriteUrl: '${s.spriteUrl}',\n    rarity: '${s.rarity}',\n  },`
+        `  {\n    id: ${s.id},\n    name: '${s.name}',\n    spriteUrl: '${s.spriteUrl}',\n    rarity: '${s.rarity}',\n    types: [${s.types.map((t) => `'${t}'`).join(', ')}],\n  },`
     )
     .join('\n')
 

@@ -1,11 +1,16 @@
 import type { z } from 'zod'
 
-import type { caughtPokemonSchema, pokemonRaritySchema, pokemonSpeciesSchema } from '@/shared/schemas/pokemonCatch'
+import type { caughtPokemonSchema, pokemonRaritySchema, pokemonSpeciesSchema, pokemonTypeSchema } from '@/shared/schemas/pokemonCatch'
 
 /**
  * Rarity tier: indicates probability of species appearing in catch selection
  */
 export type PokemonRarity = z.infer<typeof pokemonRaritySchema>
+
+/**
+ * Elemental type (e.g. 'fire', 'water')
+ */
+export type PokemonType = z.infer<typeof pokemonTypeSchema>
 
 /**
  * Individual Pokemon species data: id, name, sprite URL, and rarity tier
@@ -23,6 +28,7 @@ const _speciesSatisfies: PokemonSpecies = {
   name: 'Pikachu',
   spriteUrl: 'https://example.com/pikachu.png',
   rarity: 'common',
+  types: ['electric'],
 } as const satisfies PokemonSpecies
 
 const _caughtSatisfies: CaughtPokemon = {

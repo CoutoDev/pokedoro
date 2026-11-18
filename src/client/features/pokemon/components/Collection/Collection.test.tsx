@@ -126,6 +126,32 @@ describe('Collection', () => {
     expect(screen.queryByText('Pikachu')).toBeNull()
   })
 
+  it('combines search, type and rarity filters and can clear them', async () => {
+    (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.resolve(
+      new Response(JSON.stringify([]), { status: 200 }),
+    ))
+
+    renderCollection({
+      user: { id: 'u1', email: 'a@b.com', createdAt: new Date(), updatedAt: new Date() },
+      status: 'authenticated',
+      error: null,
+    })
+    await flush()
+
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'pika' } })
+    expect(document.querySelectorAll('.grid > div')).toHaveLength(1)
+    expect(screen.getByText('#025')).not.toBeNull()
+
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'fire' } })
+    expect(screen.getByText('No Pokémon match your filters.')).not.toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
+    fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'fire' } })
+    fireEvent.change(screen.getByLabelText('Rarity'), { target: { value: 'rare' } })
+    expect(screen.getByText('#146')).not.toBeNull()
+    expect(screen.getByRole('status').textContent).toBe('1 Pokémon found')
+  })
+
   it('shows an error message when the fetch fails', async () => {
     (spyOn(globalThis, 'fetch') as any).mockImplementation(() => Promise.reject(new Error('network error')))
 

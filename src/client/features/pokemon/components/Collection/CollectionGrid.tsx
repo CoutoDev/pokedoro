@@ -12,6 +12,8 @@ export interface CollectionGridProps {
   handleSpeciesClick: (species: PokemonSpecies, count: number) => void
 }
 
+const formatId = (id: number) => `#${id.toString().padStart(3, '0')}`
+
 const CollectionGrid = ({ items, handleSpeciesClick }: CollectionGridProps) => {
   return (
     <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
@@ -28,14 +30,16 @@ const CollectionGrid = ({ items, handleSpeciesClick }: CollectionGridProps) => {
                 {caught.count}
               </span>
             )}
+            <p className="text-center text-[10px] font-semibold text-muted">{formatId(species.id)}</p>
             <p className="w-full text-center text-[11px] font-heading font-normal leading-tight text-ink-soft">{displayName}</p>
           </div>
         ) : (
           <div key={species.id} className="flex flex-col items-center gap-1 rounded-lg border-[3px] border-dashed border-muted p-2 opacity-60">
-            <div className="h-12 w-12 rounded-md border-2 border-dashed border-muted bg-paper-soft" aria-hidden="true" />
-            <p className="text-center text-[10px] font-semibold text-muted">
-              #{species.id.toString().padStart(3, '0')}
-            </p>
+            <div className="flex h-12 w-12 items-center justify-center rounded-md border-2 border-dashed border-muted bg-paper-soft">
+              <img src={species.spriteUrl} alt="" aria-hidden="true" className="h-10 w-10 object-contain brightness-0" />
+            </div>
+            <p className="text-center text-[10px] font-semibold text-muted">{formatId(species.id)}</p>
+            <p className="w-full text-center text-[11px] font-heading font-normal leading-tight text-muted">{displayName}</p>
           </div>
         )
       })}

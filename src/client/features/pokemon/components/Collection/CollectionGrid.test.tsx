@@ -24,11 +24,14 @@ describe('CollectionGrid', () => {
     expect(container.querySelectorAll('.grid > div')).toHaveLength(2)
   })
 
-  it('renders an uncaught species as a greyed placeholder with a padded dex number', () => {
-    render(<CollectionGrid items={[{ species: bulbasaur, caught: null }]} handleSpeciesClick={() => {}} />)
+  it('renders an uncaught species as a shadowed sprite with its name and padded dex number', () => {
+    const { container } = render(<CollectionGrid items={[{ species: bulbasaur, caught: null }]} handleSpeciesClick={() => {}} />)
 
     expect(screen.getByText('#001')).not.toBeNull()
-    expect(screen.queryByText('Bulbasaur')).toBeNull()
+    expect(screen.getByText('Bulbasaur')).not.toBeNull()
+    const img = container.querySelector('img')!
+    expect(img.getAttribute('src')).toBe(bulbasaur.spriteUrl)
+    expect(img.className).toContain('brightness-0')
   })
 
   it('renders a caught species with its sprite and full name', () => {
@@ -42,6 +45,7 @@ describe('CollectionGrid', () => {
     expect(screen.getByAltText('Pikachu')).not.toBeNull()
     expect(screen.getByText('Pikachu')).not.toBeNull()
     expect(screen.getByAltText('Pikachu')).toHaveProperty('src', pikachu.spriteUrl)
+    expect(screen.getByText('#025')).not.toBeNull()
   })
 
   it('shows a count badge only when caught more than once', () => {

@@ -6,6 +6,14 @@ import { z } from 'zod'
 export const pokemonRaritySchema = z.enum(['rare', 'uncommon', 'common'])
 
 /**
+ * Elemental type of a Pokemon (Gen 1 pool)
+ */
+export const pokemonTypeSchema = z.enum([
+  'normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground',
+  'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'steel', 'fairy', 'dark',
+])
+
+/**
  * Individual caught Pokemon record: species ID + timestamp
  */
 export const caughtPokemonSchema = z.object({
@@ -36,6 +44,7 @@ export const pokemonSpeciesSchema = z.object({
   name: z.string().min(1),
   spriteUrl: z.string(),
   rarity: pokemonRaritySchema,
+  types: z.array(pokemonTypeSchema).min(1).max(2),
 })
 
 export type PokemonSpecies = z.infer<typeof pokemonSpeciesSchema>

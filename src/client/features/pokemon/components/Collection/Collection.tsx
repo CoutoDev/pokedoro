@@ -6,7 +6,9 @@ import { pokemonSpecies } from "@/shared/data/pokemonSpecies"
 import type { PokemonCatchesSummary } from "@/shared/schemas/pokemonCatch"
 import type { PokemonSpecies } from "@/shared/types/pokemon"
 
-import CollectionFilters, { type CollectionFilter } from "./CollectionFilters"
+import { initialCollectionFilters, matchesFilters } from "../../filterCollection"
+
+import CollectionFilters, { type CollectionFilterState } from "./CollectionFilters"
 import CollectionGrid from "./CollectionGrid"
 import CollectionItem from "./CollectionItem"
 import CollectionPagination from "./CollectionPagination"
@@ -20,7 +22,7 @@ const Collection = () => {
   const [error, setError] = useState<string | null>(null)
   const [isPokemonModalOpen, setIsPokemonModalOpen] = useState(false)
   const [selectedSpecies, setSelectedSpecies] = useState<{ species: PokemonSpecies; count: Number }>()
-  const [filter, setFilter] = useState<CollectionFilter>('all')
+  const [filters, setFilters] = useState<CollectionFilterState>(initialCollectionFilters)
   const [page, setPage] = useState(1)
 
   const handleSpeciesClick = (species: PokemonSpecies, count: number) => {
@@ -32,8 +34,8 @@ const Collection = () => {
     setIsPokemonModalOpen(false)
   }
 
-  const handleFilterChange = (nextFilter: CollectionFilter) => {
-    setFilter(nextFilter)
+  const handleFilterChange = (nextFilters: CollectionFilterState) => {
+    setFilters(nextFilters)
     setPage(1)
   }
 
@@ -68,12 +70,8 @@ const Collection = () => {
 
     return pokemonSpecies
       .map((species) => ({ species, caught: caughtMap.get(species.id) ?? null }))
-      .filter((item) => {
-        if (filter === 'caught') return item.caught !== null
-        if (filter === 'uncaught') return item.caught === null
-        return true
-      })
-  }, [catches, filter])
+      .filter((item) => matchesFilters(item.species, item.caught !== null, filters))
+  }, [catches, filters])
 
   const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
@@ -103,8 +101,12 @@ const Collection = () => {
       {isPokemonModalOpen && (
         <CollectionItem pokemon={selectedSpecies!.species} count={selectedSpecies!.count} handleCloseModal={handleCloseModal} />
       )}
-      <CollectionFilters filter={filter} onChange={handleFilterChange} />
-      <CollectionGrid handleSpeciesClick={handleSpeciesClick} items={pageItems} />
+      <CollectionFilters filters={filters} onChange={handleFilterChange} resultCount={items.length} />
+      {items.length === 0 ? (
+        <p className="p-6 text-center text-sm font-semibold text-muted">No Pokémon match your filters.</p>
+      ) : (
+        <CollectionGrid handleSpeciesClick={handleSpeciesClick} items={pageItems} />
+      )}
       <CollectionPagination
         page={currentPage}
         totalPages={totalPages}
