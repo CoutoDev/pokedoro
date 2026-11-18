@@ -9,7 +9,15 @@ import { getPokemonCatches } from '@/server/api/pokemonCatches'
 import { getTimerState, saveTimerState } from '@/server/api/timerState'
 import { purgeExpiredAuthRecords } from '@/server/lib/cleanup'
 
-import index from '../client/index.html'
+import { createStaticHandler } from '@/server/lib/staticAssets'
+
+const isProduction = process.env.NODE_ENV === 'production'
+
+// Dev: Bun's HTML import gives HMR. Production: serve the built dist/ ourselves so
+// the HTML can carry real security headers (frame-ancestors can't be set via <meta>).
+const appRoute = isProduction
+  ? createStaticHandler(new URL('../../dist', import.meta.url).pathname)
+  : (await import('../client/index.html')).default
 
 const PURGE_INTERVAL_MS = 15 * 60 * 1000
 
@@ -35,11 +43,11 @@ const server = serve({
     '/api/pokemon-catches': { GET: getPokemonCatches },
     '/api/timer-state': { GET: getTimerState, PUT: saveTimerState },
 
-    // Serve index.html for all unmatched routes.
-    '/*': index,
+    // Serve the SPA (and its assets) for all unmatched routes.
+    '/*': appRoute,
   },
 
-  development: process.env.NODE_ENV !== 'production' && {
+  development: !isProduction && {
     // Enable browser hot reloading in development
     hmr: true,
 

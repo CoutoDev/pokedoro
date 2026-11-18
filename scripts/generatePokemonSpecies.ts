@@ -38,7 +38,7 @@ interface PokemonRaw {
   id: number
   name: string
   sprites: {
-    front_default: string | null
+    other?: { dream_world?: { front_default: string | null } }
   }
   types: { slot: number; type: { name: string } }[]
 }
@@ -150,9 +150,14 @@ async function fetchSpecies(id: number): Promise<PokemonSpecies> {
   const pokemonData = (await pokemonResponse.json()) as PokemonRaw
 
   // Validate sprite URL
-  const spriteUrl = pokemonData.sprites.front_default
+  const spriteUrl = pokemonData.sprites.other?.dream_world?.front_default
   if (!spriteUrl || spriteUrl.trim() === '') {
     throw new Error(`Pokemon ID ${id} has no sprite URL`)
+  }
+
+  // Dream-world artwork is SVG; the app's CSP only allows images from the sprite host
+  if (spriteUrl && !spriteUrl.endsWith('.svg')) {
+    throw new Error(`Pokemon ID ${id} sprite is not an SVG: ${spriteUrl}`)
   }
 
   // Validate sprite URL is HTTPS

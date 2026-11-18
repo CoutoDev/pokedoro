@@ -2,6 +2,12 @@
 <html lang="en-US">
   <head>
     <meta charset="UTF-8" />
+    <!-- Sprites are SVGs from the PokeAPI sprites repo; that host is the only
+         external image source. Fonts come from Google Fonts via index.css. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; img-src 'self' https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="./poke-favicon.ico" />
     <title>Pokedoro</title>
