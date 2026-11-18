@@ -39,6 +39,8 @@ const CollectionFilters = ({ filters, onChange, resultCount }: CollectionFilters
         <Input
           id="collection-search"
           type="search"
+          maxLength={50}
+          autoComplete="off"
           placeholder="Name, #number or type"
           value={filters.search}
           onChange={(e) => set('search', e.target.value)}
