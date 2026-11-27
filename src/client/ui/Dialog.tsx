@@ -21,6 +21,18 @@ export const Dialog = ({ open, onClose, id, className, children }: DialogProps) 
     }
   }, [open])
 
+  // Lock page scroll while open: mobile browsers otherwise let the page behind
+  // a modal <dialog> scroll.
+  useEffect(() => {
+    if (!open) return
+    const root = document.documentElement
+    const previousOverflow = root.style.overflow
+    root.style.overflow = 'hidden'
+    return () => {
+      root.style.overflow = previousOverflow
+    }
+  }, [open])
+
   if (!open) return null
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDialogElement>) => {
@@ -41,7 +53,10 @@ export const Dialog = ({ open, onClose, id, className, children }: DialogProps) 
           onClose()
         }}
         className={cn(
-          "relative m-0 top-auto max-h-[86vh] w-full max-w-md overflow-y-auto rounded-t-2xl border-4 border-b-0 border-ink bg-card p-6 shadow-none sm:rounded-2xl sm:border-b-4 sm:m-auto sm:top-0",
+          // Anchored with `fixed` (to the viewport, not the document): showModal()
+          // moves the dialog into the top layer, outside the wrapper div, so a
+          // non-fixed position would scroll with the page.
+          "fixed inset-x-0 top-auto bottom-0 mx-auto my-0 max-h-[86dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-2xl border-4 border-b-0 border-ink bg-card p-6 shadow-none sm:inset-0 sm:m-auto sm:rounded-2xl sm:border-b-4",
           className,
         )}
       >

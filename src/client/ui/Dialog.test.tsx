@@ -73,6 +73,20 @@ describe('Dialog', () => {
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
+  it('locks page scroll while open and restores it on close', () => {
+    document.documentElement.style.overflow = 'auto'
+    const { rerender } = render(
+      <Dialog open onClose={() => {}}>content</Dialog>,
+    )
+
+    expect(document.documentElement.style.overflow).toBe('hidden')
+
+    rerender(<Dialog open={false} onClose={() => {}}>content</Dialog>)
+
+    expect(document.documentElement.style.overflow).toBe('auto')
+    document.documentElement.style.overflow = ''
+  })
+
   it('closes the dialog once open turns false', () => {
     const { rerender, container } = render(
       <Dialog open onClose={() => {}}>content</Dialog>,
