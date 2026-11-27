@@ -6,6 +6,7 @@ plugins = ["bun-plugin-tailwind"]
 preload = ["./happydom.ts"]
 coverage = true
 coverageReporter = ["text", "lcov"] 
+coverageThreshold = 0.9
 coveragePathIgnorePatterns = [
   # Exclude small pure utility files (client/features/**/*, client/lib/**/*)
   "**/calculateRemaining.ts",

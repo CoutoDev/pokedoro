@@ -1,6 +1,8 @@
 import { caughtPokemonSchema, pokemonCatchesSummarySchema } from "@/shared/schemas/pokemonCatch"
 import type { PokemonCatchesSummary } from "@/shared/schemas/pokemonCatch"
-import type { CyclePayload } from "@/shared/schemas/pomodoroCycle"
+import { cycleStatsResponseSchema } from "@/shared/schemas/cycleStats"
+import type { CycleStatsResponse } from "@/shared/schemas/cycleStats"
+import type { CyclePayload, StoppedCyclePayload } from "@/shared/schemas/pomodoroCycle"
 import type { SerializedUser } from "@/shared/reviveUser"
 import type { CaughtPokemon } from "@/shared/types/pokemon"
 import type { PomodoroCycle } from "@/shared/types/pomodoro-cycle"
@@ -91,6 +93,33 @@ export async function getPokemonCatches(): Promise<PokemonCatchesSummary | null>
     return pokemonCatchesSummarySchema.parse(await res.json())
   } catch (error) {
     console.error("Failed to fetch Pokémon catches:", error)
+    return null
+  }
+}
+
+/** Records a phase the user reset early. Fire-and-forget: a failure only loses one stats row. */
+export async function postStoppedCycle(payload: StoppedCyclePayload): Promise<boolean> {
+  try {
+    const res = await fetch("/api/cycles/stopped", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+    return res.ok
+  } catch (error) {
+    console.error("Failed to record stopped cycle:", error)
+    return false
+  }
+}
+
+export async function getCycleStats(): Promise<CycleStatsResponse | null> {
+  try {
+    const res = await fetch("/api/cycle-stats", { credentials: "include" })
+    if (!res.ok) return null
+
+    return cycleStatsResponseSchema.parse(await res.json())
+  } catch (error) {
+    console.error("Failed to fetch cycle stats:", error)
     return null
   }
 }

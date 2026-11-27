@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, mock, spyOn } from "bun:test"
 
-import { getPokemonCatches, postCycle } from "@/client/api"
+import { getCycleStats, getPokemonCatches, postCycle, postStoppedCycle } from "@/client/api"
 
 afterEach(() => {
   mock.restore()
@@ -103,5 +103,54 @@ describe("getPokemonCatches", () => {
 
     expect(result).toBeNull()
     expect(consoleError).toHaveBeenCalled()
+  })
+})
+
+describe("postStoppedCycle", () => {
+  const payload = {
+    cycleId: "c1", phase: "FOCUS" as const, focusDuration: 1500, shortBreakDuration: 300, longBreakDuration: 900, elapsedSeconds: 60,
+  }
+
+  it("returns true on success", async () => {
+    mockFetchOnce(Response.json({ ok: true }, { status: 201 }))
+    expect(await postStoppedCycle(payload)).toBe(true)
+  })
+
+  it("returns false on a non-OK response", async () => {
+    mockFetchOnce(Response.json({}, { status: 500 }))
+    expect(await postStoppedCycle(payload)).toBe(false)
+  })
+
+  it("returns false when the request throws", async () => {
+    spyOn(console, "error").mockImplementation(() => {})
+    ;(spyOn(globalThis, "fetch") as any).mockImplementation(async () => { throw new Error("offline") })
+    expect(await postStoppedCycle(payload)).toBe(false)
+  })
+})
+
+describe("getCycleStats", () => {
+  const body = {
+    stats: {
+      completedSets: 0, focusTowardNextSet: 0,
+      byPhase: { FOCUS: { completed: 0, stopped: 0 }, SHORT_BREAK: { completed: 0, stopped: 0 }, LONG_BREAK: { completed: 0, stopped: 0 } },
+      focusCompletionRate: null, focusSecondsCompleted: 0, focusSecondsStopped: 0, totalCatches: 0, uniqueSpecies: 0,
+    },
+    sets: [],
+  }
+
+  it("returns the parsed stats", async () => {
+    mockFetchOnce(Response.json(body))
+    expect(await getCycleStats()).toEqual(body)
+  })
+
+  it("returns null on a non-OK response", async () => {
+    mockFetchOnce(Response.json({}, { status: 401 }))
+    expect(await getCycleStats()).toBeNull()
+  })
+
+  it("returns null when the payload fails validation", async () => {
+    spyOn(console, "error").mockImplementation(() => {})
+    mockFetchOnce(Response.json({ nope: true }))
+    expect(await getCycleStats()).toBeNull()
   })
 })

@@ -92,6 +92,14 @@ Every completed phase (`FOCUS` | `SHORT_BREAK` | `LONG_BREAK`) awards a wild-cau
 - `useCycleRecorder` caches its `cycleId` in a `useRef` and only clears it once the timer state moves *past* the completion event (status leaves `IDLE` or `remaining` leaves `0`) — not within the same completion pass. Clearing it eagerly would let a React StrictMode double-effect-invocation mint a second `cycleId` and double-POST for what the user experiences as one phase completion; there's a regression test for this in `TimerContext.test.tsx`.
 - `CatchReveal` (native `<dialog>`, `role="dialog"`, ESC-to-dismiss) and `Collection`/`CollectionGrid` (smart/dumb split, fetch-on-mount) follow the same patterns as `TimerSettings` and `Timer`/`TimerDisplay` respectively — see Component patterns below.
 
+### `client/features/stats` and `shared/stats` — cycle tracking
+
+A **classic Pomodoro cycle ("set")** is `FOCUSES_PER_SET` (4, in `shared/stats/groupIntoSets.ts`) *completed* focus sessions; breaks and stopped phases attach to the open set, and a long break directly after the closing focus belongs to that set. Sets are **derived at read time** from phase rows (no stored set state) by the pure `groupIntoSets`, and aggregates by `computeStats` — both in `shared/` with `shared/schemas/cycleStats.ts` as the wire contract. Change the cycle rule in `groupIntoSets` only.
+
+"Stopped" is recorded only by `useTimer.handleResetClick` (signed in, status RUNNING/PAUSED) via `postStoppedCycle`; the other `RESET` dispatches (post-completion in `useCycleRecorder`, login/logout in `useAccountSync`) must not record. Elapsed time comes from `features/timer/elapsedSeconds.ts`. Limitations: closing the tab mid-phase records nothing, signed-out users record nothing, and per-day metrics are deliberately absent (server is UTC).
+
+`Stats` (smart, fetch-on-mount like `Collection`) renders `StatsSummary` + `StatsHistory`; `App.tsx` mounts it as the third nav view.
+
 ### `shared/schemas/pomodoroCycle.ts` — single source of truth for wire contracts
 
 `timerStateWireSchema` and `cyclePayloadSchema` are the one definition of the `/api/timer-state` and `/api/cycles` body shapes, imported directly by both the server handlers (`server/api/timerState.ts`, `server/api/cycles.ts`) and the client's `reviveTimerState` (`features/timer/timerStorage.ts`), so the three no longer drift independently. `reviveTimerState` `safeParse`s incoming state against this schema before reviving date strings to `Date`s — a shape that doesn't validate (e.g. a stale field name from old localStorage) falls back to the caller-supplied default instead of silently merging unknown keys forward.
@@ -107,6 +115,8 @@ Every completed phase (`FOCUS` | `SHORT_BREAK` | `LONG_BREAK`) awards a wild-cau
 | `GET /api/auth/me` | `server/api/auth/me.ts` | Resolves the session cookie to a user |
 | `POST /api/auth/logout` | `server/api/auth/logout.ts` | CSRF-checked; destroys the session, clears the cookie |
 | `POST /api/cycles` | `server/api/cycles.ts` | CSRF + session checked; records a completed Pomodoro cycle and its Pokémon catch atomically |
+| `POST /api/cycles/stopped` | `server/api/stoppedCycles.ts` | CSRF + session checked; records a phase the user reset early (`outcome='STOPPED'`, no catch). Idempotent on `cycleId`; `elapsedSeconds` clamped to the phase's planned duration |
+| `GET /api/cycle-stats` | `server/api/cycleStats.ts` | Session checked; LEFT JOINs phases to catches, returns aggregates (`computeStats`) + the 20 most recent classic cycles (`groupIntoSets`), newest first |
 | `GET /api/pokemon-catches` | `server/api/pokemonCatches.ts` | Session checked; groups catches by species (count + most recent `caughtAt`), sorted by species ID |
 | `GET`/`PUT` `/api/timer-state` | `server/api/timerState.ts` | Session checked (PUT also CSRF-checked); syncs `PomodoroCycle` JSON per user |
 | `/*` | `src/client/index.html` | SPA fallback |
@@ -115,7 +125,7 @@ Every completed phase (`FOCUS` | `SHORT_BREAK` | `LONG_BREAK`) awards a wild-cau
 
 **`server/lib/rateLimit.ts`** wraps its state behind a `RateLimiter` interface (`InMemoryRateLimiter` implements it); `consumeRateLimit`/`resetRateLimits`/`getClientIp` are the stable call-site API. The in-memory implementation is per-instance and loses state on restart — it's the component to replace with a shared-store (e.g. Redis) implementation the day this app runs more than one server instance.
 
-**`server/db/schema.ts`** (Drizzle, SQLite): `users`, `otp_codes`, `sessions`, `pomodoro_cycles`, `timer_states` (one JSON blob per user, keyed by `userId`, validated on write against `timerStateWireSchema`), `pokemon_catches` (`userId` FK + index, `cycleId` FK with a `UNIQUE` index enforcing at-most-one-catch-per-cycle, `speciesId`, `caughtAt`).
+**`server/db/schema.ts`** (Drizzle, SQLite): `users`, `otp_codes`, `sessions`, `pomodoro_cycles`, `timer_states` (one JSON blob per user, keyed by `userId`, validated on write against `timerStateWireSchema`), `pomodoro_cycles` is one row per **phase** (not per classic cycle) with `outcome` (`COMPLETED` | `STOPPED`) and `elapsedSeconds`; `completedAt` is the phase's end time (server time of the POST), including for stopped phases. `pokemon_catches` (`userId` FK + index, `cycleId` FK with a `UNIQUE` index enforcing at-most-one-catch-per-cycle, `speciesId`, `caughtAt`).
 
 ## Component patterns
 

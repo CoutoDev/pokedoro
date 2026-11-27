@@ -133,6 +133,8 @@ describe('createCycle', () => {
       focusDuration: 1500,
       shortBreakDuration: 300,
       longBreakDuration: 900,
+      outcome: 'COMPLETED',
+      elapsedSeconds: 1500,
     })
 
     // Verify catch was inserted with the same cycleId

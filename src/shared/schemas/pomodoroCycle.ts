@@ -45,3 +45,14 @@ export const cyclePayloadSchema = z.object({
 })
 
 export type CyclePayload = z.infer<typeof cyclePayloadSchema>
+
+/**
+ * Payload for `POST /api/cycles/stopped`: a phase the user reset before it
+ * ran to zero. Same idempotency key scheme as `cyclePayloadSchema`; the server
+ * clamps `elapsedSeconds` to the phase's planned duration.
+ */
+export const stoppedCyclePayloadSchema = cyclePayloadSchema.extend({
+  elapsedSeconds: durationSeconds,
+})
+
+export type StoppedCyclePayload = z.infer<typeof stoppedCyclePayloadSchema>

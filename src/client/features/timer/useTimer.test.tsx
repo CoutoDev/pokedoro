@@ -1,7 +1,9 @@
-import { afterEach, describe, expect, it, mock } from 'bun:test'
+import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { act, cleanup, renderHook } from '@testing-library/react'
 import type { PropsWithChildren } from 'react'
 
+import * as api from '@/client/api'
+import { AuthContext, initialAuthState } from '@/client/features/auth/AuthContext'
 import { TimerContext, initialTimerState } from '@/client/features/timer/TimerContext/TimerContext'
 import type { TimerAction } from '@/client/features/timer/timerReducer'
 
@@ -11,8 +13,10 @@ import { useTimer } from './useTimer'
 const renderUseTimer = (
   timer = initialTimerState,
   timerDispatch = mock((_action: TimerAction) => {}),
+  authStatus: 'authenticated' | 'unauthenticated' = 'unauthenticated',
 ) => {
   const wrapper = ({ children }: PropsWithChildren) => (
+    <AuthContext.Provider value={{ auth: { ...initialAuthState, status: authStatus }, authDispatch: () => {} }}>
     <TimerContext.Provider
       value={{
         timer,
@@ -25,6 +29,7 @@ const renderUseTimer = (
     >
       {children}
     </TimerContext.Provider>
+    </AuthContext.Provider>
   )
 
   return { ...renderHook(() => useTimer(), { wrapper }), timerDispatch }
@@ -147,5 +152,55 @@ describe('useTimer', () => {
     })
 
     expect(timerDispatch).toHaveBeenCalledWith({ type: 'RESET' })
+  })
+
+  describe('stopped phases', () => {
+    const running = {
+      ...initialTimerState,
+      status: 'RUNNING' as const,
+      focusDuration: 1500,
+      remaining: 1500,
+      sessionTimeout: new Date(Date.now() + 1200 * 1000),
+    }
+
+    it('records a stopped phase when a signed-in user resets a running timer', () => {
+      const post = spyOn(api, 'postStoppedCycle').mockResolvedValue(true)
+      const { result, timerDispatch } = renderUseTimer(running, undefined, 'authenticated')
+
+      act(() => {
+        result.current.handleResetClick()
+      })
+
+      expect(post).toHaveBeenCalledTimes(1)
+      expect(post.mock.calls[0]![0]).toMatchObject({
+        phase: 'FOCUS',
+        focusDuration: 1500,
+        elapsedSeconds: expect.any(Number),
+        cycleId: expect.any(String),
+      })
+      expect(timerDispatch).toHaveBeenCalledWith({ type: 'RESET' })
+    })
+
+    it('does not record when signed out', () => {
+      const post = spyOn(api, 'postStoppedCycle').mockResolvedValue(true)
+      const { result } = renderUseTimer(running)
+
+      act(() => {
+        result.current.handleResetClick()
+      })
+
+      expect(post).not.toHaveBeenCalled()
+    })
+
+    it('does not record when the timer is idle', () => {
+      const post = spyOn(api, 'postStoppedCycle').mockResolvedValue(true)
+      const { result } = renderUseTimer(initialTimerState, undefined, 'authenticated')
+
+      act(() => {
+        result.current.handleResetClick()
+      })
+
+      expect(post).not.toHaveBeenCalled()
+    })
   })
 })
