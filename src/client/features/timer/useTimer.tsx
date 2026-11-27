@@ -1,5 +1,8 @@
 import { useCallback } from "react"
 
+import { postStoppedCycle } from "@/client/api"
+import { useAuthContext } from "@/client/features/auth/AuthContext"
+import { elapsedSeconds } from "@/client/features/timer/elapsedSeconds"
 import { useTimerContext } from "@/client/features/timer/TimerContext"
 
 const PHASE_DURATION_KEY = {
@@ -10,6 +13,7 @@ const PHASE_DURATION_KEY = {
 
 export const useTimer = () => {
   const { timer, timerDispatch } = useTimerContext();
+  const { auth } = useAuthContext()
   const { remaining, status, phase, focusDuration } = timer
   const totalDuration = timer[PHASE_DURATION_KEY[phase]]
 
@@ -69,10 +73,23 @@ export const useTimer = () => {
   }, [timerDispatch])
 
   const handleResetClick = useCallback(() => {
+    // Only a user-initiated reset of an in-flight phase counts as "stopped";
+    // the other RESET dispatches (post-completion, login/logout sync) don't.
+    if (auth.status === 'authenticated' && timer.status !== 'IDLE') {
+      void postStoppedCycle({
+        cycleId: crypto.randomUUID(),
+        phase: timer.phase,
+        focusDuration: timer.focusDuration,
+        shortBreakDuration: timer.shortBreakDuration,
+        longBreakDuration: timer.longBreakDuration,
+        elapsedSeconds: elapsedSeconds(timer),
+      })
+    }
+
     timerDispatch({
       type: "RESET"
     })
-  }, [timerDispatch])
+  }, [timerDispatch, auth.status, timer])
 
   return {
     remaining,

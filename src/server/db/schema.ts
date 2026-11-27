@@ -32,8 +32,16 @@ export const pomodoroCycles = sqliteTable('pomodoro_cycles', {
   focusDuration: integer('focus_duration').notNull(),
   shortBreakDuration: integer('short_break_duration').notNull(),
   longBreakDuration: integer('long_break_duration').notNull(),
+  /**
+   * When the phase ended — server time of the POST. For a STOPPED phase this
+   * is when the user reset it (the column name predates stopped phases).
+   */
   completedAt: integer('completed_at', { mode: 'timestamp' }).notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  /** 'COMPLETED' (ran to zero, earns a catch) or 'STOPPED' (reset early, no catch). */
+  outcome: text('outcome').notNull().default('COMPLETED'),
+  /** Seconds actually spent in the phase; equals the planned duration when COMPLETED. */
+  elapsedSeconds: integer('elapsed_seconds').notNull().default(0),
 })
 
 export const timerStates = sqliteTable('timer_states', {

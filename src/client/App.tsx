@@ -1,18 +1,19 @@
 import { useState } from "react"
-import { LayoutGrid, Timer as TimerIcon } from "lucide-react"
+import { BarChart3, LayoutGrid, Timer as TimerIcon } from "lucide-react"
 
 import Login from "./features/auth/components/Login"
 import Timer from "./features/timer/components/Timer"
 import TimerSettings from "./features/timer/components/TimerSettings"
 import CatchReveal from "./features/pokemon/components/CatchReveal"
 import Collection from "./features/pokemon/components/Collection"
+import Stats from "./features/stats/components/Stats"
 import { AuthContextProvider } from "./features/auth/AuthContext"
 import { TimerContextProvider, useTimerContext } from "./features/timer/TimerContext"
 import { Button } from "./ui/Button"
 import { cn } from "./lib/cn"
 import "./index.css"
 
-type View = 'timer' | 'collection'
+type View = 'timer' | 'collection' | 'stats'
 
 /** Reads the catch-reveal state from TimerContext and renders it as an overlay above either view. */
 function CatchRevealOverlay() {
@@ -51,7 +52,9 @@ export function App() {
             </header>
 
             <main className="flex flex-1 flex-col items-center gap-6">
-              {view === 'timer' ? <Timer /> : <Collection />}
+              {view === 'timer' && <Timer />}
+              {view === 'collection' && <Collection />}
+              {view === 'stats' && <Stats />}
             </main>
             <CatchRevealOverlay />
           </TimerContextProvider>
@@ -85,6 +88,18 @@ export function App() {
         >
           <LayoutGrid className="h-5 w-5" aria-hidden="true" />
           Collection
+        </Button>
+        <Button
+          variant="ghost"
+          className={cn(
+            "flex-1 flex-col gap-1 border-none shadow-none",
+            view === 'stats' ? "bg-focus text-card" : "bg-transparent text-muted",
+          )}
+          aria-current={view === 'stats'}
+          onClick={() => setView('stats')}
+        >
+          <BarChart3 className="h-5 w-5" aria-hidden="true" />
+          Stats
         </Button>
       </nav>
     </div>

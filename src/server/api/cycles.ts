@@ -4,6 +4,7 @@ import { db } from '@/server/db/client'
 import { pomodoroCycles, pokemonCatches } from '@/server/db/schema'
 import { isTrustedOrigin } from '@/server/lib/csrf'
 import { getSessionUser, parseSessionCookie } from '@/server/lib/session'
+import { plannedSeconds } from '@/server/lib/plannedSeconds'
 import { rollCatch } from '@/server/pokemon/rollCatch'
 import { caughtPokemonSchema } from '@/shared/schemas/pokemonCatch'
 import { cyclePayloadSchema } from '@/shared/schemas/pomodoroCycle'
@@ -39,6 +40,8 @@ export async function createCycle(req: Request): Promise<Response> {
         ...cycleData,
         completedAt: now,
         createdAt: now,
+        outcome: 'COMPLETED',
+        elapsedSeconds: plannedSeconds({ phase, ...cycleData }),
       })
 
       // Roll for a species based on the phase type
