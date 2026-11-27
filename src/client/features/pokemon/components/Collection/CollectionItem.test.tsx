@@ -23,6 +23,14 @@ describe('CollectionItem', () => {
     expect(screen.getByText('x3')).not.toBeNull()
   })
 
+  it('lists the species types in slot order', () => {
+    const bulbasaur = pokemonSpecies.find((s) => s.id === 1)!
+    render(<CollectionItem pokemon={bulbasaur} count={1} handleCloseModal={() => {}} />)
+
+    const types = screen.getAllByRole('listitem').map((li) => li.textContent)
+    expect(types).toEqual(['grass', 'poison'])
+  })
+
   it('closes on the close button click', () => {
     const handleCloseModal = mock(() => {})
     render(<CollectionItem pokemon={pikachu} count={1} handleCloseModal={handleCloseModal} />)
